@@ -1,4 +1,5 @@
 Data extracted from [DrugCentral](http://drugcentral.org) published under [CC BY-SA](http://drugcentral.org/privacy).
+
 Ursu, O., Holmes, J., Knockel, J., Bologa, C. G., Yang, J. J., Mathias, S. L., … Oprea, T. I. (2016). DrugCentral: online drug compendium. Nucleic Acids Research, 45(D1), D932–D939. https://doi.org/10.1093/nar/gkw993
 
 Queries for data extraction:
