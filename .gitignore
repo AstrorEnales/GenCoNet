@@ -5,3 +5,4 @@ data/DrugBank/drugbank_all_full_database.xml.zip
 data/DrugBank/full database.xml
 data/DrugBank/full_database.xml
 data/HGNC/hgnc_complete_set.txt
+data/HPO/OMIM_FREQUENT_FEATURES_diseases_to_genes_to_phenotypes.txt
