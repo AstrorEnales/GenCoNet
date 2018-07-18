@@ -6,3 +6,7 @@ data/DrugBank/full database.xml
 data/DrugBank/full_database.xml
 data/HGNC/hgnc_complete_set.txt
 data/HPO/OMIM_FREQUENT_FEATURES_diseases_to_genes_to_phenotypes.txt
+data/DisGeNet/curated_gene_disease_associations.tsv
+data/DisGeNet/curated_gene_disease_associations.tsv.gz
+data/DisGeNet/curated_variant_disease_associations.tsv
+data/DisGeNet/curated_variant_disease_associations.tsv.gz
