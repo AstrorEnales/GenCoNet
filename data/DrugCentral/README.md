@@ -15,7 +15,7 @@ Queries for data extraction:
         WHERE a.relationship_name = "contraindication" AND b.id_type = "DRUGBANK_ID" AND (a.umls_cui IS NOT NULL OR a.snomed_conceptid IS NOT NULL);
 
     SELECT DISTINCT a.id as drugcentral_id, b.identifier as drugbank_id, c.identifier as rxnorm_id, a.name AS drug_name
-    	FROM structures as a
+        FROM structures as a
         LEFT JOIN identifier AS b ON a.id=b.struct_id
-        LEFT JOIN identifier AS c ON a.id=c.struct_id
-        WHERE b.id_type = "DRUGBANK_ID" AND c.id_type = "RXNORM" ORDER BY b.identifier;
+        LEFT JOIN identifier AS c ON a.id=c.struct_id AND c.id_type = "RXNORM"
+        WHERE b.id_type = "DRUGBANK_ID" ORDER BY b.identifier;

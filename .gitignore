@@ -10,3 +10,5 @@ data/DisGeNet/curated_gene_disease_associations.tsv
 data/DisGeNet/curated_gene_disease_associations.tsv.gz
 data/DisGeNet/curated_variant_disease_associations.tsv
 data/DisGeNet/curated_variant_disease_associations.tsv.gz
+output/
+__pycache__
