@@ -67,3 +67,6 @@ class Network:
                 for gene_id in gene.ids:
                     del self.genes[gene_id]
                     removed_gene_ids.add(gene_id)
+        for i in range(len(self.gene_associates_with_disease) - 1, -1, -1):
+            if self.gene_associates_with_disease[i][0] in removed_gene_ids:
+                del self.gene_associates_with_disease[i]

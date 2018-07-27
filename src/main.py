@@ -183,6 +183,6 @@ if __name__ == '__main__':
     import_drugbank(network)
     import_disgenet(network)
     # Cleanup
-    # TODO: network.prune()
+    network.prune()
     # Export
     save_network(network, '../output/')
