@@ -48,7 +48,7 @@ def import_drugbank(network: Network):
             network.add_drug(drug)
             gene = Gene([row[4], 'HGNCSymbol:%s' % row[2]], [row[3]])
             network.add_gene(gene)
-            rel = {'source': 'DrugBank', 'known_action': row[5] == 1, 'actions': row[6],
+            rel = {'source': 'DrugBank', 'known_action': row[5] == 1, 'actions': row[6].split(','),
                    'simplified_action': row[7]}
             network.drug_targets_gene.append([next(iter(drug.ids)), next(iter(gene.ids)), rel])
 
@@ -69,7 +69,7 @@ def import_disgenet(network: Network):
             # NofSnps
             # source
             if int(row[5]) >= PUBMED_COUNT_THRESHOLD:
-                gene = Gene(['DisGeNet:%s' % row[0], 'HGNCSymbol:%s' % row[1]], [])
+                gene = Gene(['HGNCSymbol:%s' % row[1]], [])
                 network.add_gene(gene)
                 disease = Disease(['UMLS:%s' % row[2]], [row[3]])
                 network.add_disease(disease)
@@ -101,7 +101,7 @@ def import_disgenet(network: Network):
                     'num_pubmed_ids': int(row[4]),
                     'score': row[5]
                 }
-                network.gene_associates_with_disease.append([next(iter(variant.ids)), next(iter(disease.ids)), rel])
+                network.variant_associates_with_disease.append([next(iter(variant.ids)), next(iter(disease.ids)), rel])
 
 
 def save_network(network: Network, output_path: str):
@@ -133,20 +133,47 @@ def save_network(network: Network, output_path: str):
         writer.writerow(['_id:ID(Variant-ID)', 'ids:string[]', 'names:string[]', ':LABEL'])
         for variant in set(network.variants.values()):
             writer.writerow([variant.get_id(), ';'.join(variant.ids), ';'.join(variant.names), 'Variant'])
-    # Save drug -[indicates]-> disease relationships
+    # Save drug -[INDICATES]-> disease relationships
     with io.open(os.path.join(output_path, 'drug_indicates_disease.csv'), 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
         writer.writerow([':START_ID(Drug-ID)', 'source:string', ':END_ID(Disease-ID)', ':TYPE'])
         for row in network.drug_indicates_disease:
             writer.writerow([network.get_drug_by_id(row[0]).get_id(), row[2]['source'],
                              network.get_disease_by_id(row[1]).get_id(), 'INDICATES'])
-    # Save drug -[contraindicates]-> disease relationships
+    # Save drug -[CONTRAINDICATES]-> disease relationships
     with io.open(os.path.join(output_path, 'drug_contraindicates_disease.csv'), 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
         writer.writerow([':START_ID(Drug-ID)', 'source:string', ':END_ID(Disease-ID)', ':TYPE'])
         for row in network.drug_contraindicates_disease:
             writer.writerow([network.get_drug_by_id(row[0]).get_id(), row[2]['source'],
                              network.get_disease_by_id(row[1]).get_id(), 'CONTRAINDICATES'])
+    # Save drug -[TARGETS]-> gene relationships
+    with io.open(os.path.join(output_path, 'drug_targets_gene.csv'), 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Drug-ID)', 'source:string', 'known_action:boolean', 'actions:string[]',
+                         'simplified_action:string', ':END_ID(Gene-ID)', ':TYPE'])
+        for row in network.drug_targets_gene:
+            writer.writerow([network.get_drug_by_id(row[0]).get_id(), row[2]['source'],
+                             'true' if row[2]['known_action'] else 'false', ';'.join(row[2]['actions']),
+                             row[2]['simplified_action'], network.get_gene_by_id(row[1]).get_id(), 'TARGETS'])
+    # Save gene -[ASSOCIATES_WITH]-> disease relationships
+    with io.open(os.path.join(output_path, 'gene_associates_with_disease.csv'), 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Gene-ID)', 'source:string', 'num_pubmed_ids:int', 'num_snps:int', 'score:string',
+                         ':END_ID(Disease-ID)', ':TYPE'])
+        for row in network.gene_associates_with_disease:
+            writer.writerow([network.get_gene_by_id(row[0]).get_id(), row[2]['source'], row[2]['num_pubmed_ids'],
+                             row[2]['num_snps'], row[2]['score'], network.get_disease_by_id(row[1]).get_id(),
+                             'ASSOCIATES_WITH'])
+    # Save variant -[ASSOCIATES_WITH]-> disease relationships
+    with io.open(os.path.join(output_path, 'variant_associates_with_disease.csv'), 'w', encoding='utf-8', newline='') \
+            as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Variant-ID)', 'source:string', 'num_pubmed_ids:int', 'score:string',
+                         ':END_ID(Disease-ID)', ':TYPE'])
+        for row in network.variant_associates_with_disease:
+            writer.writerow([network.get_variant_by_id(row[0]).get_id(), row[2]['source'], row[2]['num_pubmed_ids'],
+                             row[2]['score'], network.get_disease_by_id(row[1]).get_id(), 'ASSOCIATES_WITH'])
 
 
 if __name__ == '__main__':
@@ -156,6 +183,6 @@ if __name__ == '__main__':
     import_drugbank(network)
     import_disgenet(network)
     # Cleanup
-    network.prune()
+    # TODO: network.prune()
     # Export
     save_network(network, '../output/')
