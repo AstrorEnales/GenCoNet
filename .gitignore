@@ -1,14 +1,9 @@
 .idea/
-data/MED-RT/Core_MEDRT_XML.xml
-data/MED-RT/Core_MEDRT_XML.zip
-data/DrugBank/drugbank_all_full_database.xml.zip
-data/DrugBank/full database.xml
-data/DrugBank/full_database.xml
-data/HGNC/hgnc_complete_set.txt
-data/HPO/OMIM_FREQUENT_FEATURES_diseases_to_genes_to_phenotypes.txt
-data/DisGeNet/curated_gene_disease_associations.tsv
-data/DisGeNet/curated_gene_disease_associations.tsv.gz
-data/DisGeNet/curated_variant_disease_associations.tsv
-data/DisGeNet/curated_variant_disease_associations.tsv.gz
+data/*/*.xml
+data/*/*.zip
+data/*/*.txt
+data/*/*.tsv
+data/*/*.csv
+data/*/*.gz
 output/
 __pycache__

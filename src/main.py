@@ -3,6 +3,7 @@
 import csv
 import io
 import os
+import re
 import shutil
 
 from model.disease import Disease
@@ -75,7 +76,7 @@ def import_disgenet(network: Network):
                 network.add_disease(disease)
                 rel = {
                     'source': 'DisGeNet,%s' % row[7],
-                    'num_pubmed_ids': int(row[5]),
+                    'num_pmids': int(row[5]),
                     'num_snps': int(row[6]),
                     'score': row[4]
                 }
@@ -98,10 +99,68 @@ def import_disgenet(network: Network):
                 network.add_disease(disease)
                 rel = {
                     'source': 'DisGeNet,%s' % row[5],
-                    'num_pubmed_ids': int(row[4]),
+                    'num_pmids': int(row[4]),
                     'score': row[5]
                 }
                 network.variant_associates_with_disease.append([next(iter(variant.ids)), next(iter(disease.ids)), rel])
+
+
+def import_gwas_catalog(network: Network):
+    # 0 DATE ADDED TO CATALOG
+    # 1 PUBMEDID
+    # 2 FIRST AUTHOR
+    # 3 DATE
+    # 4 JOURNAL
+    # 5 LINK
+    # 6 STUDY
+    # 7 DISEASE/TRAIT
+    # 8 INITIAL SAMPLE SIZE
+    # 9 REPLICATION SAMPLE SIZE
+    # 10 REGION
+    # 11 CHR_ID
+    # 12 CHR_POS
+    # 13 REPORTED GENE(S)
+    # 14 MAPPED_GENE
+    # 15 UPSTREAM_GENE_ID
+    # 16 DOWNSTREAM_GENE_ID
+    # 17 SNP_GENE_IDS
+    # 18 UPSTREAM_GENE_DISTANCE
+    # 19 DOWNSTREAM_GENE_DISTANCE
+    # 20 STRONGEST SNP-RISK ALLELE
+    # 21 SNPS
+    # 22 MERGED
+    # 23 SNP_ID_CURRENT
+    # 24 CONTEXT
+    # 25 INTERGENIC
+    # 26 RISK ALLELE FREQUENCY
+    # 27 P-VALUE
+    # 28 PVALUE_MLOG
+    # 29 P-VALUE (TEXT)
+    # 30 OR or BETA
+    # 31 95% CI (TEXT)
+    # 32 PLATFORM [SNPS PASSING QC]
+    # 33 CNV
+    all_gene_ids = set()
+    loc_pattern = re.compile(r'LOC[0-9]+')
+    with io.open('../data/GWAS-Catalog/gwas_catalog_associations.tsv', 'r', encoding='utf-8', newline='') as f:
+        reader = csv.reader(f, delimiter='\t', quotechar='"')
+        next(reader, None)
+        for row in reader:
+            if row[14] is None or len(row[14]) == 0:
+                continue
+            gene_ids = row[14].replace(' x ', ', ').replace(' - ', ', ').split(', ')
+            for gene_id in gene_ids:
+                if loc_pattern.fullmatch(gene_id) is not None:
+                    continue
+                gene = Gene(['HGNCSymbol:%s' % gene_id], [])
+                all_gene_ids.add(gene_id)
+                network.add_gene(gene)
+                variant = Variant(['dbSNP:%s' % row[21]], [])
+                network.add_variant(variant)
+                network.gene_codes_variant.append(
+                    [gene.get_id(), variant.get_id(), {'source': 'GWASCatalog', 'pmid': row[1]}])
+    print(len(all_gene_ids))
+    print(all_gene_ids)
 
 
 def save_network(network: Network, output_path: str):
@@ -159,21 +218,28 @@ def save_network(network: Network, output_path: str):
     # Save gene -[ASSOCIATES_WITH]-> disease relationships
     with io.open(os.path.join(output_path, 'gene_associates_with_disease.csv'), 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Gene-ID)', 'source:string', 'num_pubmed_ids:int', 'num_snps:int', 'score:string',
+        writer.writerow([':START_ID(Gene-ID)', 'source:string', 'num_pmids:int', 'num_snps:int', 'score:string',
                          ':END_ID(Disease-ID)', ':TYPE'])
         for row in network.gene_associates_with_disease:
-            writer.writerow([network.get_gene_by_id(row[0]).get_id(), row[2]['source'], row[2]['num_pubmed_ids'],
+            writer.writerow([network.get_gene_by_id(row[0]).get_id(), row[2]['source'], row[2]['num_pmids'],
                              row[2]['num_snps'], row[2]['score'], network.get_disease_by_id(row[1]).get_id(),
                              'ASSOCIATES_WITH'])
     # Save variant -[ASSOCIATES_WITH]-> disease relationships
     with io.open(os.path.join(output_path, 'variant_associates_with_disease.csv'), 'w', encoding='utf-8', newline='') \
             as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Variant-ID)', 'source:string', 'num_pubmed_ids:int', 'score:string',
+        writer.writerow([':START_ID(Variant-ID)', 'source:string', 'num_pmids:int', 'score:string',
                          ':END_ID(Disease-ID)', ':TYPE'])
         for row in network.variant_associates_with_disease:
-            writer.writerow([network.get_variant_by_id(row[0]).get_id(), row[2]['source'], row[2]['num_pubmed_ids'],
+            writer.writerow([network.get_variant_by_id(row[0]).get_id(), row[2]['source'], row[2]['num_pmids'],
                              row[2]['score'], network.get_disease_by_id(row[1]).get_id(), 'ASSOCIATES_WITH'])
+    # Save gene -[CODES]-> variant relationships
+    with io.open(os.path.join(output_path, 'gene_codes_variant.csv'), 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Gene-ID)', 'source:string', 'pmid:int', ':END_ID(Variant-ID)', ':TYPE'])
+        for row in network.gene_codes_variant:
+            writer.writerow([network.get_gene_by_id(row[0]).get_id(), row[2]['source'], row[2]['pmid'],
+                             network.get_variant_by_id(row[1]).get_id(), 'CODES'])
 
 
 if __name__ == '__main__':
@@ -182,6 +248,7 @@ if __name__ == '__main__':
     import_drugcentral(network)
     import_drugbank(network)
     import_disgenet(network)
+    import_gwas_catalog(network)
     # Cleanup
     network.prune()
     # Export

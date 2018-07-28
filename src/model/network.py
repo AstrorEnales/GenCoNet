@@ -15,6 +15,7 @@ class Network:
         self.drug_targets_gene = []
         self.gene_associates_with_disease = []
         self.variant_associates_with_disease = []
+        self.gene_codes_variant = []
 
     def add_drug(self, drug: Drug):
         matches = [self.drugs[x] for x in drug.ids if x in self.drugs]
@@ -70,3 +71,6 @@ class Network:
         for i in range(len(self.gene_associates_with_disease) - 1, -1, -1):
             if self.gene_associates_with_disease[i][0] in removed_gene_ids:
                 del self.gene_associates_with_disease[i]
+        for i in range(len(self.gene_codes_variant) - 1, -1, -1):
+            if self.gene_codes_variant[i][0] in removed_gene_ids:
+                del self.gene_codes_variant[i]
