@@ -46,21 +46,22 @@ class Network:
             self.variants[x] = variant
 
     def get_drug_by_id(self, _id: str) -> Drug:
-        return self.drugs[_id]
+        return self.drugs[_id] if _id in self.drugs else None
 
     def get_disease_by_id(self, _id: str) -> Disease:
-        return self.diseases[_id]
+        return self.diseases[_id] if _id in self.diseases else None
 
     def get_gene_by_id(self, _id: str) -> Gene:
-        return self.genes[_id]
+        return self.genes[_id] if _id in self.genes else None
 
     def get_variant_by_id(self, _id: str) -> Variant:
-        return self.variants[_id]
+        return self.variants[_id] if _id in self.variants else None
 
     def prune(self):
         """
         Remove nodes that are not connected to drugs and therefore of no interest.
         """
+        # Remove genes of no interest
         removed_gene_ids = set()
         targeted_genes_id = {x[1] for x in self.drug_targets_gene}
         for gene in set(self.genes.values()):
@@ -74,3 +75,14 @@ class Network:
         for i in range(len(self.gene_codes_variant) - 1, -1, -1):
             if self.gene_codes_variant[i][0] in removed_gene_ids:
                 del self.gene_codes_variant[i]
+        # Remove variants of no interest
+        removed_variant_ids = set()
+        coded_variants_id = {x[1] for x in self.gene_codes_variant}
+        for variant in set(self.variants.values()):
+            if coded_variants_id.isdisjoint(variant.ids):
+                for variant_id in variant.ids:
+                    del self.variants[variant_id]
+                    removed_variant_ids.add(variant_id)
+        for i in range(len(self.variant_associates_with_disease) - 1, -1, -1):
+            if self.variant_associates_with_disease[i][0] in removed_variant_ids:
+                del self.variant_associates_with_disease[i]

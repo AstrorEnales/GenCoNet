@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 
+from exporter.graphml_exporter import GraphMLExporter
 from model.disease import Disease
 from model.drug import Drug
 from model.gene import Gene
@@ -18,7 +19,10 @@ def import_drugcentral(network: Network):
         reader = csv.reader(f, delimiter=',', quotechar='"')
         next(reader, None)
         for row in reader:
-            drug = Drug(['DrugCentral:%s' % row[0], 'DrugBank:%s' % row[1], 'RxNorm:%s' % row[2]], [row[3]])
+            ids = ['DrugCentral:%s' % row[0], 'DrugBank:%s' % row[1]]
+            if row[2] is not None and len(row[2]) > 0:
+                ids.append('RxNorm:%s' % row[2])
+            drug = Drug(ids, [row[3]])
             network.add_drug(drug)
 
     with io.open('../data/DrugCentral/drugcentral_indications.csv', 'r', encoding='utf-8', newline='') as f:
@@ -140,7 +144,6 @@ def import_gwas_catalog(network: Network):
     # 31 95% CI (TEXT)
     # 32 PLATFORM [SNPS PASSING QC]
     # 33 CNV
-    all_gene_ids = set()
     loc_pattern = re.compile(r'LOC[0-9]+')
     with io.open('../data/GWAS-Catalog/gwas_catalog_associations.tsv', 'r', encoding='utf-8', newline='') as f:
         reader = csv.reader(f, delimiter='\t', quotechar='"')
@@ -153,14 +156,11 @@ def import_gwas_catalog(network: Network):
                 if loc_pattern.fullmatch(gene_id) is not None:
                     continue
                 gene = Gene(['HGNCSymbol:%s' % gene_id], [])
-                all_gene_ids.add(gene_id)
                 network.add_gene(gene)
                 variant = Variant(['dbSNP:%s' % row[21]], [])
                 network.add_variant(variant)
                 network.gene_codes_variant.append(
                     [gene.get_id(), variant.get_id(), {'source': 'GWASCatalog', 'pmid': row[1]}])
-    print(len(all_gene_ids))
-    print(all_gene_ids)
 
 
 def save_network(network: Network, output_path: str):
@@ -240,6 +240,18 @@ def save_network(network: Network, output_path: str):
         for row in network.gene_codes_variant:
             writer.writerow([network.get_gene_by_id(row[0]).get_id(), row[2]['source'], row[2]['pmid'],
                              network.get_variant_by_id(row[1]).get_id(), 'CODES'])
+    with io.open(os.path.join(output_path, 'create_indices.cypher'), 'w', encoding='utf-8', newline='') as f:
+        f.write('create constraint on (p:Drug) assert p._id is unique;\n')
+        f.write('create constraint on (p:Gene) assert p._id is unique;\n')
+        f.write('create constraint on (p:Variant) assert p._id is unique;\n')
+        f.write('create constraint on (p:Disease) assert p._id is unique;\n')
+    with io.open(os.path.join(output_path, 'import_admin.bat'), 'w', encoding='utf-8', newline='') as f:
+        f.write('@echo off\n')
+        f.write('E:/runtime/neo4j-community-3.3.1/bin/neo4j-admin import --nodes diseases.csv --nodes drugs.csv ' +
+                '--nodes genes.csv --nodes variants.csv --relationships drug_contraindicates_disease.csv ' +
+                '--relationships drug_indicates_disease.csv --relationships drug_targets_gene.csv ' +
+                '--relationships gene_associates_with_disease.csv --relationships gene_codes_variant.csv ' +
+                '--relationships variant_associates_with_disease.csv\n')
 
 
 if __name__ == '__main__':
@@ -253,3 +265,5 @@ if __name__ == '__main__':
     network.prune()
     # Export
     save_network(network, '../output/')
+
+    # GraphMLExporter(network).save('../output/graph.graphml')
