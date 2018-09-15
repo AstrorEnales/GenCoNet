@@ -6,6 +6,8 @@ import os
 import json
 import shutil
 
+import mondo_mapper
+
 from model.disease import Disease
 from model.drug import Drug
 from model.edge import Edge
@@ -117,7 +119,7 @@ if __name__ == '__main__':
         '../data/HGNC/graph.json',
         # '../data/HPO/graph.json',
         # '../data/MED-RT/graph.json',
-        # '../data/OMIM/graph.json'
+        '../data/OMIM/graph.json'
     ]
     # Fusion
     for graph in graphs:
@@ -138,6 +140,14 @@ if __name__ == '__main__':
                 del params['_target']
                 del params['_label']
                 network.add_edge(Edge(edge['_source'], edge['_target'], edge['_label'], params))
+    # Mapping
+    all_disease_ids = set()
+    for node in network.get_nodes_by_label('Disease'):
+        all_disease_ids.update(node.ids)
+    for disease_id in all_disease_ids:
+        mapped_ids = mondo_mapper.map_from(disease_id)
+        if len(mapped_ids) > 0:
+            network.add_node(Disease(mapped_ids, []))
     # Cleanup
     network.prune()
     # Export

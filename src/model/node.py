@@ -27,7 +27,7 @@ class Node:
         for x in self.ids:
             if x.startswith('%s:' % self.primary_id_prefix):
                 return x
-        return None
+        return list(self.ids)[0]
 
     def merge(self, o):
         self.ids.update(o.ids)

@@ -3,7 +3,6 @@
 import io
 import csv
 import json
-import requests
 from model.network import Network
 from model.gene import Gene
 from model.disease import Disease
@@ -47,43 +46,12 @@ with io.open('../data/OMIM/genemap2.txt', 'r', encoding='utf-8', newline='') as 
                     filtered_results.append([row[3], phenotype, phenotype_mim, inheritance, mapping_key,
                                              row[8], row[5]])
 
-mappings = {}
-for row in filtered_results:
-    mappings['OMIM:%s' % row[2]] = [None, None]
-sorted_keys = sorted(mappings.keys())
-chunk_size = 20
-i = 0
-while i < len(sorted_keys):
-    chunk = sorted_keys[i:i + chunk_size]
-    print('[', i, ',', i + chunk_size, ']', '/', len(sorted_keys))
-    r = requests.post('https://www.ebi.ac.uk/spot/oxo/api/search',
-                      json={"ids": chunk, "mappingTarget": ["UMLS"], "distance": "1"})
-    if r.status_code == 500:
-        if chunk_size == 1:
-            i += 1
-        else:
-            chunk_size = 1
-    else:
-        query_results = r.json()['_embedded']['searchResults']
-        for row in query_results:
-            if len(row['mappingResponseList']) > 0:
-                target = row['mappingResponseList'][0]
-                mappings[row['curie']] = [target['curie'], target['label']]
-        i += chunk_size
-        chunk_size = 20
-
-with io.open('../data/OMIM/omim_to_umls.csv', 'w', encoding='utf-8', newline='') as f:
-    writer = csv.writer(f, delimiter=',', quotechar='"')
-    writer.writerow(['OMIM', 'UMLS', 'UMLS name'])
-    for key in sorted(mappings.keys()):
-        writer.writerow([key] + mappings[key])
-
 with io.open('../data/OMIM/filtered_associations.csv', 'w', encoding='utf-8', newline='') as f:
     writer = csv.writer(f, delimiter=',', quotechar='"')
     writer.writerow(['Location', 'Phenotype', 'Phenotype MIM number', 'Inheritance', 'Phenotype mapping key',
-                     'Gene/Locus', 'Gene/Locus MIM number', 'Phenotype UMLS', 'Phenotype UMLS name'])
+                     'Gene/Locus', 'Gene/Locus MIM number'])
     for row in filtered_results:
-        writer.writerow(row + mappings['OMIM:%s' % row[2]])
+        writer.writerow(row)
 
 network = Network()
 
@@ -94,22 +62,13 @@ network = Network()
 # 4 Phenotype mapping key
 # 5 Gene/Locus
 # 6 Gene/Locus MIM number
-# 7 Phenotype UMLS
-# 8 Phenotype UMLS name
 with io.open('../data/OMIM/filtered_associations.csv', 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter=',', quotechar='"')
     next(reader, None)
     for row in reader:
-        disease_ids = ['OMIM:%s' % row[2]]
-        if row[7] is not None and len(row[7]) > 0:
-            disease_ids.append(row[7])
-        else:
-            # TODO: currently can't use a disease without UMLS id
-            continue
-        disease_names = [] if row[8] is not None and len(row[8]) > 0 else []
-        disease = Disease(disease_ids, disease_names)
+        disease = Disease(['OMIM:%s' % row[2]], [])
         network.add_node(disease)
-        gene = Gene(['HGNCSymbol:%s' % row[5], 'OMIM:%s' % row[6]], [])
+        gene = Gene(['HGNCSymbol:%s' % row[5]], [])  # , 'OMIM:%s' % row[6]
         network.add_node(gene)
         rel = {
             'source': 'OMIM',

@@ -11,6 +11,7 @@ Under development
      - Configure `data/config.json` to your Neo4j installation (bin path including admin tools)
   2. Execution
      1. Pre-processing
+        - Run `mondo.py`
         - Run `drugbank.py`
         - Run `drugcentral.py`
         - Run `disgenet.py`
@@ -18,7 +19,7 @@ Under development
         - Run `hgnc.py`
         - Run `hpo.py` (WIP)
         - Run `med_rt.py` (WIP)
-        - Run `omim.py` (WIP)
+        - Run `omim.py`
         - Run `pubmed.py`
      2. Fusion
         - Run `fusion.py`
