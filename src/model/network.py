@@ -1,11 +1,19 @@
+from model.disease import Disease
+from model.drug import Drug
+from model.gene import Gene
 from model.node import Node
 from model.edge import Edge
+from model.variant import Variant
+from typing import List, Dict
 
 
 class Network:
     def __init__(self):
-        self.nodes: {str: Node} = {}
-        self.edges: [Edge] = []
+        self.nodes: Dict[str, Node] = {}
+        self.edges: Dict[int, Edge] = {}
+        self.edge_lookup: Dict[str, Dict[int, Edge]] = {}
+        self.edge_source_lookup: Dict[str, Dict[int, Edge]] = {}
+        self.edge_target_lookup: Dict[str, Dict[int, Edge]] = {}
 
     def add_node(self, node: Node):
         matches = [self.nodes[x] for x in node.ids if x in self.nodes]
@@ -19,55 +27,67 @@ class Network:
     def get_node_by_id(self, _id: str) -> Node:
         return self.nodes[_id] if _id in self.nodes else None
 
-    def get_nodes_by_label(self, label: str) -> [Node]:
-        result = []
+    def get_nodes_by_label(self, label: str) -> List[Node]:
+        result = set()
         for node in self.nodes.values():
             if node.label == label:
-                result.append(node)
-        return result
+                result.add(node)
+        return list(result)
 
     def add_edge(self, edge: Edge):
-        self.edges.append(edge)
+        self.edges[edge.id] = edge
+        if edge.label not in self.edge_lookup:
+            self.edge_lookup[edge.label] = {}
+        self.edge_lookup[edge.label][edge.id] = edge
+        if edge.source not in self.edge_source_lookup:
+            self.edge_source_lookup[edge.source] = {}
+        self.edge_source_lookup[edge.source][edge.id] = edge
+        if edge.target not in self.edge_target_lookup:
+            self.edge_target_lookup[edge.target] = {}
+        self.edge_target_lookup[edge.target][edge.id] = edge
 
-    def get_edges_by_label(self, label: str) -> [Edge]:
+    def get_edges_by_label(self, label: str) -> List[Edge]:
+        return list(self.edge_lookup[label].values()) if label in self.edge_lookup else []
+
+    def get_node_edges_by_label(self, node: Node, label: str) -> List[Edge]:
         result = []
-        for edge in self.edges:
-            if edge.label == label:
-                result.append(edge)
+        if label in self.edge_lookup:
+            for edge in self.edge_lookup[label].values():
+                if edge.source in node.ids or edge.target in node.ids:
+                    result.append(edge)
         return result
+
+    def delete_node(self, node: Node):
+        edges = []
+        for _id in node.ids:
+            del self.nodes[_id]
+            if _id in self.edge_source_lookup:
+                edges.extend(self.edge_source_lookup[_id].values())
+                del self.edge_source_lookup[_id]
+            if _id in self.edge_target_lookup:
+                edges.extend(self.edge_target_lookup[_id].values())
+                del self.edge_target_lookup[_id]
+        for edge in edges:
+            if edge.id in self.edges:
+                del self.edges[edge.id]
+            if edge.id in self.edge_lookup[edge.label]:
+                del self.edge_lookup[edge.label][edge.id]
 
     def prune(self):
         """
         Remove nodes that are not connected to drugs and therefore of no interest.
         """
         pass
-        ''' TODO
         # Remove genes of no interest
-        removed_gene_ids = set()
-        targeted_genes_id = {x[1] for x in self.get_edges_by_label('TARGETS')}
+        targeted_genes_id = {x.target for x in self.edge_lookup['TARGETS'].values()}
         for gene in set(self.get_nodes_by_label('Gene')):
             if targeted_genes_id.isdisjoint(gene.ids):
-                for gene_id in gene.ids:
-                    del self.nodes[gene_id]
-                    removed_gene_ids.add(gene_id)
-        for i in range(len(self.gene_associates_with_disease) - 1, -1, -1):
-            if self.gene_associates_with_disease[i][0] in removed_gene_ids:
-                del self.gene_associates_with_disease[i]
-        for i in range(len(self.gene_codes_variant) - 1, -1, -1):
-            if self.gene_codes_variant[i][0] in removed_gene_ids:
-                del self.gene_codes_variant[i]
+                self.delete_node(gene)
         # Remove variants of no interest
-        removed_variant_ids = set()
-        coded_variants_id = {x[1] for x in self.get_edges_by_label('CODES')}
+        coded_variants_id = {x.target for x in self.edge_lookup['CODES'].values()}
         for variant in set(self.get_nodes_by_label('Variant')):
             if coded_variants_id.isdisjoint(variant.ids):
-                for variant_id in variant.ids:
-                    del self.nodes[variant_id]
-                    removed_variant_ids.add(variant_id)
-        for i in range(len(self.variant_associates_with_disease) - 1, -1, -1):
-            if self.variant_associates_with_disease[i][0] in removed_variant_ids:
-                del self.variant_associates_with_disease[i]
-        '''
+                self.delete_node(variant)
 
     def to_dict(self) -> {}:
         result = {
@@ -77,9 +97,26 @@ class Network:
         for node in set(self.nodes.values()):
             n = {'ids': sorted(node.ids), 'names': sorted(node.names), '_id': node.id, '_label': node.label}
             result['nodes'].append(n)
-        for edge in self.edges:
+        for edge in self.edges.values():
             e = {'_label': edge.label, '_source': edge.source, '_target': edge.target}
             for key in edge.attributes:
                 e[key] = edge.attributes[key]
             result['edges'].append(e)
         return result
+
+    def load_from_dict(self, source: {}):
+        for node in source['nodes']:
+            if node['_label'] == 'Drug':
+                self.add_node(Drug(node['ids'], node['names']))
+            elif node['_label'] == 'Gene':
+                self.add_node(Gene(node['ids'], node['names']))
+            elif node['_label'] == 'Variant':
+                self.add_node(Variant(node['ids'], node['names']))
+            elif node['_label'] == 'Disease':
+                self.add_node(Disease(node['ids'], node['names']))
+        for edge in source['edges']:
+            params = dict(edge)
+            del params['_source']
+            del params['_target']
+            del params['_label']
+            self.add_edge(Edge(edge['_source'], edge['_target'], edge['_label'], params))

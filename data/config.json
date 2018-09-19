@@ -1,6 +1,8 @@
 {
   "Neo4j": {
-    "bin-path": "E:/runtime/neo4j-community-3.3.1/bin/"
+    "bin-path": "D:/Portable/neo4j-community-3.2.8/bin/",
+    "database-path": "D:/Portable/neo4j-community-3.2.8/data/databases/",
+    "database-name": "graph.db"
   },
   "output-path": "../output/"
 }

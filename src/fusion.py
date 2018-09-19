@@ -9,11 +9,7 @@ import shutil
 import mondo_mapper
 
 from model.disease import Disease
-from model.drug import Drug
-from model.edge import Edge
-from model.gene import Gene
 from model.network import Network
-from model.variant import Variant
 
 
 def cleanup_output(output_path: str):
@@ -21,6 +17,14 @@ def cleanup_output(output_path: str):
     if os.path.exists(output_path) and os.path.isdir(output_path):
         shutil.rmtree(output_path)
     os.mkdir(output_path)
+
+
+def merge_duplicate_node_names(network: Network):
+    for node in network.nodes.values():
+        for name in list(node.names):
+            # Most duplications are lower case vs first letter upper case
+            if name[0].islower() and (name[0].upper() + name[1:]) in node.names:
+                node.names.remove(name)
 
 
 def save_network(network: Network, config):
@@ -86,17 +90,24 @@ def save_network(network: Network, config):
         f.write('create constraint on (p:Disease) assert p._id is unique;\n')
     with io.open(os.path.join(output_path, 'import_admin.bat'), 'w', encoding='utf-8', newline='') as f:
         f.write('@echo off\n')
+        f.write('net stop neo4j\n')
+        f.write('rmdir /s "%s"\n' % os.path.join(config['Neo4j']['database-path'], config['Neo4j']['database-name']))
         f.write(os.path.join(config['Neo4j']['bin-path'], 'neo4j-admin'))
         f.write(' import ' +
+                '--database %s ' % config['Neo4j']['database-name'] +
                 '--nodes nodes.csv ' +
                 '--relationships rel_INDICATES.csv ' +
                 '--relationships rel_CONTRAINDICATES.csv ' +
                 '--relationships rel_TARGETS.csv ' +
                 '--relationships rel_ASSOCIATES_WITH.csv ' +
                 '--relationships rel_CODES.csv > import.log\n')
+        f.write('net start neo4j\n')
+        f.write(os.path.join(config['Neo4j']['bin-path'], 'cypher-shell'))
+        f.write(' -u neo4j -p root --non-interactive < create_indices.cypher 1>> import.log 2>&1\n')
     with io.open(os.path.join(output_path, 'import_admin.sh'), 'w', encoding='utf-8', newline='') as f:
         f.write(os.path.join(config['Neo4j']['bin-path'], 'neo4j-admin'))
         f.write(' import ' +
+                '--database %s ' % config['Neo4j']['database-name'] +
                 '--nodes nodes.csv ' +
                 '--relationships rel_INDICATES.csv ' +
                 '--relationships rel_CONTRAINDICATES.csv ' +
@@ -125,21 +136,7 @@ if __name__ == '__main__':
     for graph in graphs:
         with io.open(graph, 'r', encoding='utf-8', newline='') as f:
             g = json.loads(f.read())
-            for node in g['nodes']:
-                if node['_label'] == 'Drug':
-                    network.add_node(Drug(node['ids'], node['names']))
-                elif node['_label'] == 'Gene':
-                    network.add_node(Gene(node['ids'], node['names']))
-                elif node['_label'] == 'Variant':
-                    network.add_node(Variant(node['ids'], node['names']))
-                elif node['_label'] == 'Disease':
-                    network.add_node(Disease(node['ids'], node['names']))
-            for edge in g['edges']:
-                params = dict(edge)
-                del params['_source']
-                del params['_target']
-                del params['_label']
-                network.add_edge(Edge(edge['_source'], edge['_target'], edge['_label'], params))
+            network.load_from_dict(g)
     # Mapping
     all_disease_ids = set()
     for node in network.get_nodes_by_label('Disease'):
@@ -150,6 +147,7 @@ if __name__ == '__main__':
             network.add_node(Disease(mapped_ids, []))
     # Cleanup
     network.prune()
+    merge_duplicate_node_names(network)
     # Export
     cleanup_output(config['output-path'])
     with io.open(os.path.join(config['output-path'], 'graph.json'), 'w', encoding='utf-8', newline='') as f:

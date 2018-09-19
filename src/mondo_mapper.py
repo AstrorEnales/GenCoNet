@@ -1,5 +1,6 @@
 import io
 import json
+from typing import List
 
 with io.open('../data/MONDO/lookup.json', 'r', encoding='utf-8', newline='') as f:
     lookup = json.load(f)
@@ -17,7 +18,7 @@ def map_from_to(source_id: str, target_prefix: str) -> str or None:
     return None
 
 
-def map_from(source_id: str) -> [str]:
+def map_from(source_id: str) -> List[str]:
     result = set()
     if source_id in reverse_lookup:
         for mondo_id in reverse_lookup[source_id]:

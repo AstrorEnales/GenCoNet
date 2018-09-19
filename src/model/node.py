@@ -1,7 +1,10 @@
+from typing import Set
+
+
 class Node:
     def __init__(self, ids: [str], names: [str]):
-        self.ids = set(ids)
-        self.names = set(names)
+        self.ids: Set[str] = set(ids)
+        self.names: Set[str] = set(names)
         # Cache the hash value
         self.hash = ','.join(self.ids).__hash__()
         self.primary_id_prefix = ''
@@ -23,11 +26,17 @@ class Node:
         return self.__class__.__name__
 
     @property
-    def id(self) -> str or None:
+    def id(self) -> str:
         for x in self.ids:
             if x.startswith('%s:' % self.primary_id_prefix):
                 return x
         return list(self.ids)[0]
+
+    def get_id_value(self, prefix: str) -> str or None:
+        for x in self.ids:
+            if x.startswith('%s:' % prefix):
+                return x.split(':')[1]
+        return None
 
     def merge(self, o):
         self.ids.update(o.ids)
