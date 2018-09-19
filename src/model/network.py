@@ -52,9 +52,11 @@ class Network:
     def get_node_edges_by_label(self, node: Node, label: str) -> List[Edge]:
         result = []
         if label in self.edge_lookup:
-            for edge in self.edge_lookup[label].values():
-                if edge.source in node.ids or edge.target in node.ids:
-                    result.append(edge)
+            for _id in node.ids:
+                if _id in self.edge_source_lookup:
+                    result.extend([e for e in self.edge_source_lookup[_id].values() if e.label == label])
+                if _id in self.edge_target_lookup:
+                    result.extend([e for e in self.edge_target_lookup[_id].values() if e.label == label])
         return result
 
     def delete_node(self, node: Node):

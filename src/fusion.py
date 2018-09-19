@@ -22,9 +22,10 @@ def cleanup_output(output_path: str):
 def merge_duplicate_node_names(network: Network):
     for node in network.nodes.values():
         for name in list(node.names):
-            # Most duplications are lower case vs first letter upper case
-            if name[0].islower() and (name[0].upper() + name[1:]) in node.names:
-                node.names.remove(name)
+            if any([x[0].islower() for x in name.split(' ')]):
+                # Most duplications are lower case vs first letter upper case
+                if ' '.join([x[0].upper() + x[1:] for x in name.split(' ')]) in node.names:
+                    node.names.remove(name)
 
 
 def save_network(network: Network, config):
