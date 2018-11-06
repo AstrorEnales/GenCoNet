@@ -131,6 +131,7 @@ if __name__ == '__main__':
         '../data/HGNC/graph.json',
         # '../data/HPO/graph.json',
         # '../data/MED-RT/graph.json',
+        '../data/NDF-RT/graph.json',
         '../data/OMIM/graph.json'
     ]
     # Fusion

@@ -4,6 +4,7 @@ import json
 import os.path
 import xml.etree.ElementTree
 import io
+import zipfile
 import csv
 from model.network import Network
 from model.drug import Drug
@@ -20,9 +21,17 @@ def get_drugbank_id(drug_node, ns):
 
 
 file = '../data/DrugBank/full database.xml'
+zip_file = '../data/DrugBank/drugbank_all_full_database.xml.zip'
 if not os.path.exists(file):
-    print('Database file "%s" does not exist.' % file)
-    exit(1)
+    print('Extracting database file...')
+    with zipfile.ZipFile(zip_file) as z:
+        date_filename = [x for x in z.namelist() if x == 'full database.xml']
+        if len(date_filename) != 1:
+            print('Failed to find database file in archive. Extract the file manually as "full database.xml".')
+            exit(1)
+        else:
+            with open(file, 'wb') as f:
+                f.write(z.read(date_filename[0]))
 
 output_file = '../data/DrugBank/drugs_target_human_genes.csv'
 if not os.path.exists(output_file):
