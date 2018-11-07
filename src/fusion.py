@@ -76,6 +76,14 @@ def save_network(network: Network, config):
             writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'], num_pmids, num_snps, score,
                              network.get_node_by_id(e.target).id, e.label])
 
+    # Save INDUCES relationships
+    with io.open(os.path.join(output_path, 'rel_INDUCES.csv'), 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
+        for e in network.get_edges_by_label('INDUCES'):
+            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
+                             network.get_node_by_id(e.target).id, e.label])
+
     # Save CODES relationships
     with io.open(os.path.join(output_path, 'rel_CODES.csv'), 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
@@ -101,6 +109,7 @@ def save_network(network: Network, config):
                 '--relationships rel_CONTRAINDICATES.csv ' +
                 '--relationships rel_TARGETS.csv ' +
                 '--relationships rel_ASSOCIATES_WITH.csv ' +
+                '--relationships rel_INDUCES.csv ' +
                 '--relationships rel_CODES.csv > import.log\n')
         f.write('net start neo4j\n')
         f.write(os.path.join(config['Neo4j']['bin-path'], 'cypher-shell'))
@@ -129,10 +138,11 @@ if __name__ == '__main__':
         '../data/DrugCentral/graph.json',
         '../data/GWAS-Catalog/graph.json',
         '../data/HGNC/graph.json',
-        # '../data/HPO/graph.json',
-        # '../data/MED-RT/graph.json',
+        '../data/HPO/graph.json',
+        '../data/MED-RT/graph.json',
         '../data/NDF-RT/graph.json',
-        '../data/OMIM/graph.json'
+        '../data/OMIM/graph.json',
+        # '../data/PubMed/graph.json',
     ]
     # Fusion
     for graph in graphs:
