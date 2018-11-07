@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 
+import json
 import os.path
 import xml.etree.ElementTree
 import io
-import csv
 import urllib.request
 import zipfile
 import re
+from model.network import Network
+from model.drug import Drug
+from model.disease import Disease
+from model.edge import Edge
 
 file = '../data/MED-RT/Core_MEDRT_XML.xml'
 zip_file = '../data/MED-RT/Core_MEDRT_XML.zip'
@@ -28,20 +32,40 @@ if not os.path.exists(file):
             with open(file, 'wb') as f:
                 f.write(z.read(date_filename[0]))
 
+network = Network()
+
 root = xml.etree.ElementTree.parse(file).getroot()
-for t in [('MED_RT_contraindications', 'CI_with'), ('MED_RT_indications', 'may_treat'),
-          ('MED_RT_inductions', 'induces')]:
-    with io.open('../data/MED-RT/%s.csv' % t[0], 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow(['rxnorm_id', 'mesh_id', 'mesh_term'])
-        for association in root.findall('association'):
-            association_type = association.find('name').text
-            from_namespace = association.find('from_namespace').text
-            from_id = association.find('from_code').text
-            to_namespace = association.find('to_namespace').text
-            to_id = association.find('to_code').text
-            to_name = association.find('to_name').text
-            if from_namespace != 'RxNorm' or to_namespace != 'MeSH':
-                continue
-            if association_type == t[1]:
-                writer.writerow([from_id, to_id, to_name])
+added_rxnorm_drugs = set()
+added_mesh_diseases = set()
+for association in root.findall('association'):
+    association_type = association.find('name').text
+    from_namespace = association.find('from_namespace').text
+    from_id = association.find('from_code').text
+    from_name = association.find('from_name').text
+    to_namespace = association.find('to_namespace').text
+    to_id = association.find('to_code').text
+    to_name = association.find('to_name').text
+    if from_namespace != 'RxNorm' or to_namespace != 'MeSH':
+        continue
+    if association_type not in ['induces', 'CI_with', 'may_treat']:
+        continue
+    drug_id = 'RxNorm:%s' % from_id
+    if from_id not in added_rxnorm_drugs:
+        drug = Drug([drug_id], [from_name])
+        network.add_node(drug)
+        added_rxnorm_drugs.add(from_id)
+    disease_id = 'MESH:%s' % to_id
+    if to_id not in added_mesh_diseases:
+        disease = Disease([disease_id], [to_name])
+        network.add_node(disease)
+        added_mesh_diseases.add(to_id)
+    rel = {'source': 'MED-RT'}
+    if association_type == 'induces':
+        network.add_edge(Edge(drug_id, disease_id, 'INDUCES', rel))
+    elif association_type == 'CI_with':
+        network.add_edge(Edge(drug_id, disease_id, 'CONTRAINDICATES', rel))
+    elif association_type == 'may_treat':
+        network.add_edge(Edge(drug_id, disease_id, 'INDICATES', rel))
+
+with io.open('../data/MED-RT/graph.json', 'w', encoding='utf-8', newline='') as f:
+    f.write(json.dumps(network.to_dict(), indent=2))
