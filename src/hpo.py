@@ -6,6 +6,7 @@ import urllib.request
 import io
 import csv
 from model.network import Network
+from model.disease import Disease
 from model.gene import Gene
 
 file = '../data/HPO/OMIM_FREQUENT_FEATURES_diseases_to_genes_to_phenotypes.txt'
@@ -23,7 +24,13 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     for row in reader:
-        pass
+        disease = Disease([row[0]], [])
+        network.add_node(disease)
+        gene = Gene(['HGNCSymbol:%s' % row[1], 'Entrez:%s' % row[2]], [])
+        network.add_node(gene)
+        hpo_id = row[3]
+        hpo_term_name = row[4]
+        # TODO
 
 with io.open('../data/HPO/graph.json', 'w', encoding='utf-8', newline='') as f:
     f.write(json.dumps(network.to_dict(), indent=2))
