@@ -22,9 +22,14 @@ def cleanup_output(output_path: str):
 def merge_duplicate_node_names(network: Network):
     for node in network.nodes.values():
         for name in list(node.names):
+            camel_name = ' '.join([x[0].upper() + x[1:].lower() for x in name.split(' ')])
+            if all([x.isupper() for x in name.split(' ')]):
+                # All complete upper case names with equal lower or camel case versions should be removed
+                if name.lower() in node.names or camel_name in node.names:
+                    node.names.remove(name)
             if any([x[0].islower() for x in name.split(' ')]):
                 # Most duplications are lower case vs first letter upper case
-                if ' '.join([x[0].upper() + x[1:] for x in name.split(' ')]) in node.names:
+                if camel_name in node.names:
                     node.names.remove(name)
 
 
