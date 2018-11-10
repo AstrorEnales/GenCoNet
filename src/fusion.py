@@ -21,6 +21,8 @@ def cleanup_output(output_path: str):
 
 def merge_duplicate_node_names(network: Network):
     for node in network.nodes.values():
+        if len(node.names) <= 1:
+            continue
         for name in list(node.names):
             camel_name = ' '.join([x[0].upper() + x[1:].lower() for x in name.split(' ')])
             if all([x.isupper() for x in name.split(' ')]):
@@ -159,9 +161,9 @@ if __name__ == '__main__':
     for node in network.get_nodes_by_label('Disease'):
         all_disease_ids.update(node.ids)
     for disease_id in all_disease_ids:
-        mapped_ids = mondo_mapper.map_from(disease_id)
+        mapped_ids, mapped_names = mondo_mapper.map_from(disease_id)
         if len(mapped_ids) > 0:
-            network.add_node(Disease(mapped_ids, []))
+            network.add_node(Disease(mapped_ids, mapped_names))
     # Cleanup
     network.prune()
     merge_duplicate_node_names(network)

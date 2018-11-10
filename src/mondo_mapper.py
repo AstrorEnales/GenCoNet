@@ -18,9 +18,11 @@ def map_from_to(source_id: str, target_prefix: str) -> str or None:
     return None
 
 
-def map_from(source_id: str) -> List[str]:
-    result = set()
+def map_from(source_id: str) -> (List[str], List[str]):
+    result_ids = set()
+    result_names = set()
     if source_id in reverse_lookup:
         for mondo_id in reverse_lookup[source_id]:
-            result.update(lookup[mondo_id]['refs'])
-    return sorted(result)
+            result_ids.update(lookup[mondo_id]['refs'])
+            result_names.add(lookup[mondo_id]['label'])
+    return sorted(result_ids), result_names
