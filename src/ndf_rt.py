@@ -102,6 +102,8 @@ for concept_code in sorted(concept_defs.keys()):
                 disease_ids.append('SnomedCT:%s' % prop[1])
             elif property_defs[prop[0]] == 'UMLS_CUI':
                 disease_ids.append('UMLS:%s' % prop[1])
+            elif property_defs[prop[0]] == 'MeSH_CUI':
+                disease_ids.append('MESH:%s' % prop[1])
             elif property_defs[prop[0]] == 'Synonym':
                 disease_names.append(prop[1])
         disease = Disease(disease_ids, disease_names)
