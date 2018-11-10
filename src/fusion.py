@@ -149,6 +149,7 @@ if __name__ == '__main__':
         '../data/MED-RT/graph.json',
         '../data/NDF-RT/graph.json',
         '../data/OMIM/graph.json',
+        '../data/SuperDrug2/graph.json',
         # '../data/PubMed/graph.json',
     ]
     # Fusion
