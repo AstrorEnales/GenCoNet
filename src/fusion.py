@@ -8,6 +8,8 @@ import shutil
 
 import mondo_mapper
 
+from utils import name_utils
+
 from model.disease import Disease
 from model.network import Network
 
@@ -21,18 +23,7 @@ def cleanup_output(output_path: str):
 
 def merge_duplicate_node_names(network: Network):
     for node in network.nodes.values():
-        if len(node.names) <= 1:
-            continue
-        for name in list(node.names):
-            camel_name = ' '.join([x[0].upper() + x[1:].lower() for x in name.split(' ')])
-            if all([x.isupper() for x in name.split(' ')]):
-                # All complete upper case names with equal lower or camel case versions should be removed
-                if name.lower() in node.names or camel_name in node.names:
-                    node.names.remove(name)
-            if any([x[0].islower() for x in name.split(' ')]):
-                # Most duplications are lower case vs first letter upper case
-                if camel_name in node.names:
-                    node.names.remove(name)
+        node.names = name_utils.normalize_drug_names(node.names)
 
 
 def save_network(network: Network, config):
@@ -149,7 +140,7 @@ if __name__ == '__main__':
         '../data/MED-RT/graph.json',
         '../data/NDF-RT/graph.json',
         '../data/OMIM/graph.json',
-        '../data/SuperDrug2/graph.json',
+        # '../data/SuperDrug2/graph.json',
         # '../data/PubMed/graph.json',
     ]
     # Fusion

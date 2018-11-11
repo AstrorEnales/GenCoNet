@@ -4,7 +4,7 @@ from model.gene import Gene
 from model.node import Node
 from model.edge import Edge
 from model.variant import Variant
-from typing import List, Dict
+from typing import List, Dict, Iterator
 
 
 class Network:
@@ -26,6 +26,10 @@ class Network:
 
     def get_node_by_id(self, _id: str) -> Node:
         return self.nodes[_id] if _id in self.nodes else None
+
+    def get_nodes(self) -> Iterator[Node]:
+        for node in self.nodes.values():
+            yield node
 
     def get_nodes_by_label(self, label: str) -> List[Node]:
         result = set()
@@ -57,6 +61,15 @@ class Network:
                     result.extend([e for e in self.edge_source_lookup[_id].values() if e.label == label])
                 if _id in self.edge_target_lookup:
                     result.extend([e for e in self.edge_target_lookup[_id].values() if e.label == label])
+        return result
+
+    def get_edges_from_to(self, node_from: Node, node_to: Node, label: str) -> List[Edge]:
+        result = []
+        if label in self.edge_lookup:
+            for _id in node_from.ids:
+                if _id in self.edge_source_lookup:
+                    result.extend([e for e in self.edge_source_lookup[_id].values()
+                                   if e.label == label and e.target in node_to.ids])
         return result
 
     def delete_node(self, node: Node):

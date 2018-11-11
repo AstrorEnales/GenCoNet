@@ -21,6 +21,7 @@ Under development
         - Run `med_rt.py`
         - Run `ndf_rt.py`
         - Run `omim.py`
+        - Run `superdrug2.py`
         - Run `pubmed.py`
      2. Fusion
         - Run `fusion.py`

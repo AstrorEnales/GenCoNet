@@ -8,3 +8,4 @@ data/*/*.gz
 data/*/*.json
 output/
 __pycache__
+*.cache
