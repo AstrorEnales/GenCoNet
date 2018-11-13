@@ -28,7 +28,7 @@ class Network:
         return self.nodes[_id] if _id in self.nodes else None
 
     def get_nodes(self) -> Iterator[Node]:
-        for node in self.nodes.values():
+        for node in set(self.nodes.values()):
             yield node
 
     def get_nodes_by_label(self, label: str) -> List[Node]:

@@ -11,7 +11,7 @@ class Node:
 
     def __str__(self) -> str:
         return '%s={ids: [%s], names: [%s]}' % (self.__class__.__name__, ','.join(sorted(self.ids)),
-                                                ','.join(sorted(self.names)))
+                                                ','.join(['"%s"' % x for x in sorted(self.names)]))
 
     def __eq__(self, o: object) -> bool:
         if o is not None and isinstance(o, type(self)):

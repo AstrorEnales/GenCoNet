@@ -83,6 +83,7 @@ for concept_code in sorted(concept_defs.keys()):
                 drug_ids.append('UMLS:%s' % prop[1])
             elif property_defs[prop[0]] == 'Synonym':
                 drug_names.append(prop[1])
+        drug_names = [x.replace('[VA Product]', '').strip() for x in drug_names]
         drug = Drug(drug_ids, drug_names)
         network.add_node(drug)
         for role in concept['roles']:
@@ -106,6 +107,7 @@ for concept_code in sorted(concept_defs.keys()):
                 disease_ids.append('MESH:%s' % prop[1])
             elif property_defs[prop[0]] == 'Synonym':
                 disease_names.append(prop[1])
+        disease_names = [x.replace('[Disease/Finding]', '').strip() for x in disease_names]
         disease = Disease(disease_ids, disease_names)
         network.add_node(disease)
 
