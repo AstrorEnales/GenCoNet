@@ -141,6 +141,7 @@ if __name__ == '__main__':
         '../data/NDF-RT/graph.json',
         '../data/OMIM/graph.json',
         '../data/HuGE-Navigator/graph.json',
+        '../data/SIDER/graph.json',
         # '../data/SuperDrug2/graph.json',
         # '../data/PubMed/graph.json',
     ]
