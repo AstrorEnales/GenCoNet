@@ -42,6 +42,7 @@ if __name__ == '__main__':
         f.write('<li><a href="#indi-contra-section">Drugs indicating and contraindicating same disease</a></li>\n')
         f.write('<li><a href="#synonym-section">Drugs with synonyms</a></li>\n')
         f.write('<li><a href="#loss-distinction-section">Possible loss of distinction</a></li>\n')
+        f.write('<li><a href="#single-id-nodes">Nodes with single IDs</a></li>\n')
         f.write('</ul>\n')
         f.write('<h1><a name="indi-contra-section">Drugs indicating and contraindicating same disease:</a></h1>\n')
         f.write('<table border="1">\n<thead>\n<tr><th>Drug</th><th>Indications</th><th>Contraindications</th></tr>\n</thead>\n')
@@ -86,3 +87,13 @@ if __name__ == '__main__':
             if any([id_prefix[prefix] > 1 for prefix in id_prefix]):
                 f.write('<tr><td>%s</td><td>%s</td><td>%s</td></tr>\n' % (node.label, node_ids_to_links(sorted(node.ids)), '<br/>'.join(node.names)))
         f.write('</tbody>\n</table>\n')
+
+        f.write('<h1><a name="single-id-nodes">Nodes with single IDs:</a></h1>\n')
+        f.write('<table border="1">\n<thead>\n<tr><th>Node type</th><th>Node IDs</th><th>Names</th></tr>\n</thead>\n')
+        f.write('<tbody>\n')
+        for node in network.get_nodes():
+            if len(node.ids) <= 1:
+                f.write('<tr><td>%s</td><td>%s</td><td>%s</td></tr>\n' % (node.label, node_ids_to_links(sorted(node.ids)), '<br/>'.join(node.names)))
+        f.write('</tbody>\n</table>\n')
+
+        f.write('</body>\n</html>\n')
