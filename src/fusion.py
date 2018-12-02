@@ -90,6 +90,14 @@ def save_network(network: Network, config):
             writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'], e.attributes['pmid'],
                              network.get_node_by_id(e.target).id, e.label])
 
+    # Save INTERACTS relationships
+    with io.open(os.path.join(output_path, 'rel_INTERACTS.csv'), 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Node-ID)', 'source:string', 'description:string', ':END_ID(Node-ID)', ':TYPE'])
+        for e in network.get_edges_by_label('INTERACTS'):
+            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'], e.attributes['description'],
+                             network.get_node_by_id(e.target).id, e.label])
+
     with io.open(os.path.join(output_path, 'create_indices.cypher'), 'w', encoding='utf-8', newline='') as f:
         f.write('create constraint on (p:Drug) assert p._id is unique;\n')
         f.write('create constraint on (p:Gene) assert p._id is unique;\n')
@@ -108,7 +116,8 @@ def save_network(network: Network, config):
                 '--relationships rel_TARGETS.csv ' +
                 '--relationships rel_ASSOCIATES_WITH.csv ' +
                 '--relationships rel_INDUCES.csv ' +
-                '--relationships rel_CODES.csv > import.log\n')
+                '--relationships rel_CODES.csv ' +
+                '--relationships rel_INTERACTS.csv > import.log\n')
         f.write('net start neo4j\n')
         f.write(os.path.join(config['Neo4j']['bin-path'], 'cypher-shell'))
         f.write(' -u neo4j -p root --non-interactive < create_indices.cypher 1>> import.log 2>&1\n')
@@ -121,7 +130,8 @@ def save_network(network: Network, config):
                 '--relationships rel_CONTRAINDICATES.csv ' +
                 '--relationships rel_TARGETS.csv ' +
                 '--relationships rel_ASSOCIATES_WITH.csv ' +
-                '--relationships rel_CODES.csv > import.log\n')
+                '--relationships rel_CODES.csv ' +
+                '--relationships rel_INTERACTS.csv > import.log\n')
 
 
 if __name__ == '__main__':

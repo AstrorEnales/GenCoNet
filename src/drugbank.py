@@ -33,8 +33,9 @@ if not os.path.exists(file):
             with open(file, 'wb') as f:
                 f.write(z.read(date_filename[0]))
 
-output_file = '../data/DrugBank/drugs_target_human_genes.csv'
-if not os.path.exists(output_file):
+targets_output_file = '../data/DrugBank/drugs_target_human_genes.csv'
+interactions_output_file = '../data/DrugBank/drug_interactions.csv'
+if not os.path.exists(targets_output_file) or not os.path.exists(interactions_output_file):
     positive = ['inducer', 'agonist', 'activator', 'partial agonist', 'stimulator', 'positive modulator',
                 'positive allosteric modulator']
     negative = ['blocker', 'antagonist', 'antibody', 'weak inhibitor', 'suppressor', 'partial antagonist',
@@ -83,33 +84,57 @@ if not os.path.exists(output_file):
                         'actions': sorted(actions)
                     }
                     targets.append(target)
-        if len(targets) > 0:
-            drugs[drugbank_id] = [drug_name, targets]
+        # Collect all interactions for the drug
+        interactions = []
+        interactions_node = drug_node.find(ns + 'drug-interactions')
+        if interactions_node is not None:
+            for interaction_node in interactions_node.findall(ns + 'drug-interaction'):
+                id2 = interaction_node.find(ns + 'drugbank-id').text
+                description = interaction_node.find(ns + 'description').text
+                interactions.append([id2, description])
+        drugs[drugbank_id] = [drug_name, targets, interactions]
 
-    results = []
+    targets_results = []
+    interactions_results = []
     for drugbank_id in sorted(drugs.keys()):
         drug = drugs[drugbank_id]
         for target in drug[1]:
             if target['taxon_id'] == '9606':
-                results.append([drugbank_id, drug[0], target['gene'], target['gene_name'], target['hgnc_id'],
-                                target['known_action'], ','.join(target['actions']), target['simplified_action']])
+                targets_results.append([drugbank_id, drug[0], target['gene'], target['gene_name'], target['hgnc_id'],
+                                        target['known_action'], ','.join(target['actions']),
+                                        target['simplified_action']])
+        for interaction in drug[2]:
+            if interaction[0] in drugs:
+                interactions_results.append(
+                    [drugbank_id, drug[0], interaction[0], drugs[interaction[0]][0], interaction[1]])
 
-    with io.open(output_file, 'w', encoding='utf-8', newline='') as f:
+    with io.open(targets_output_file, 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
         writer.writerow(['drugbank_id', 'drug_name', 'gene', 'gene_name', 'hgnc_id', 'known_action', 'actions',
                          'simplified_action'])
-        for row in results:
+        for row in targets_results:
+            writer.writerow(row)
+    with io.open(interactions_output_file, 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow(['drugbank_id1', 'drug_name1', 'drugbank_id2', 'drug_name2', 'description'])
+        for row in interactions_results:
             writer.writerow(row)
 else:
-    results = []
-    with io.open(output_file, 'r', encoding='utf-8', newline='') as f:
+    targets_results = []
+    with io.open(targets_output_file, 'r', encoding='utf-8', newline='') as f:
         reader = csv.reader(f, delimiter=',', quotechar='"')
         next(reader, None)
         for row in reader:
-            results.append(row)
+            targets_results.append(row)
+    interactions_results = []
+    with io.open(interactions_output_file, 'r', encoding='utf-8', newline='') as f:
+        reader = csv.reader(f, delimiter=',', quotechar='"')
+        next(reader, None)
+        for row in reader:
+            interactions_results.append(row)
 
 network = Network()
-for row in results:
+for row in targets_results:
     drug = Drug(['DrugBank:%s' % row[0]], [row[1]])
     network.add_node(drug)
     gene_ids = ['HGNCSymbol:%s' % row[2]]
@@ -124,6 +149,16 @@ for row in results:
         'simplified_action': row[7]
     }
     network.add_edge(Edge(next(iter(drug.ids)), next(iter(gene.ids)), 'TARGETS', rel))
+for row in interactions_results:
+    drug1 = Drug(['DrugBank:%s' % row[0]], [row[1]])
+    network.add_node(drug1)
+    drug2 = Drug(['DrugBank:%s' % row[2]], [row[3]])
+    network.add_node(drug2)
+    rel = {
+        'source': 'DrugBank',
+        'description': row[4]
+    }
+    network.add_edge(Edge(next(iter(drug1.ids)), next(iter(drug2.ids)), 'INTERACTS', rel))
 
 with io.open('../data/DrugBank/graph.json', 'w', encoding='utf-8', newline='') as f:
     f.write(json.dumps(network.to_dict(), indent=2))
