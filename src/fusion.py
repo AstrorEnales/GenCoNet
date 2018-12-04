@@ -57,9 +57,11 @@ def save_network(network: Network, config):
         writer.writerow([':START_ID(Node-ID)', 'source:string', 'known_action:boolean', 'actions:string[]',
                          'simplified_action:string', ':END_ID(Node-ID)', ':TYPE'])
         for e in network.get_edges_by_label('TARGETS'):
+            known_action = ('true' if e.attributes['known_action'] else 'false') \
+                if 'known_action' in e.attributes else None
+            simplified_action = e.attributes['simplified_action'] if 'simplified_action' in e.attributes else None
             writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
-                             'true' if e.attributes['known_action'] else 'false',
-                             ';'.join(e.attributes['actions']), e.attributes['simplified_action'],
+                             known_action, ';'.join(e.attributes['actions']), simplified_action,
                              network.get_node_by_id(e.target).id, e.label])
 
     # Save ASSOCIATES_WITH relationships
@@ -152,6 +154,7 @@ if __name__ == '__main__':
         '../data/OMIM/graph.json',
         '../data/HuGE-Navigator/graph.json',
         '../data/SIDER/graph.json',
+        '../data/DGIdb/graph.json',
         # '../data/SuperDrug2/graph.json',
         # '../data/PubMed/graph.json',
     ]
