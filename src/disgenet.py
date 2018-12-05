@@ -47,7 +47,7 @@ with io.open('../data/DisGeNet/curated_gene_disease_associations.tsv', 'r', enco
         # NofSnps
         # source
         if int(row[5]) >= PUBMED_COUNT_THRESHOLD:
-            gene = Gene(['HGNCSymbol:%s' % row[1]], [])
+            gene = Gene(['HGNC:%s' % row[1]], [])
             network.add_node(gene)
             disease = Disease(['UMLS:%s' % row[2]], [row[3]])
             network.add_node(disease)

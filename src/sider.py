@@ -56,7 +56,8 @@ PT for every LLT, but sometimes the PT is the same as the LLT.
 with io.open(file, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     for row in reader:
-        drug = Drug(['PubChem:%s' % row[0]], [drug_lookup[row[0]]] if row[0] in drug_lookup else [])
+        pubchem_id = row[0][4::].lstrip('0')
+        drug = Drug(['PubChem:CID%s' % pubchem_id], [drug_lookup[row[0]]] if row[0] in drug_lookup else [])
         network.add_node(drug)
         disease = Disease(['UMLS:%s' % row[1], 'UMLS:%s' % row[5]], [row[3], row[6]])
         network.add_node(disease)

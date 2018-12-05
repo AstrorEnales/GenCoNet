@@ -21,7 +21,7 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
             disease = Disease(['UMLS:%s' % parts[0][1]], [parts[0][0]])
             network.add_node(disease)
             for part in parts[1::]:
-                gene = Gene(['HGNCSymbol:%s' % part[0], 'Entrez:%s' % part[1]], [part[0]])
+                gene = Gene(['HGNC:%s' % part[0], 'Entrez:%s' % part[1]], [part[0]])
                 network.add_node(gene)
                 rel = {'source': 'HuGE Navigator'}
                 network.add_edge(Edge(next(iter(gene.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))

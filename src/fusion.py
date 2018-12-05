@@ -17,8 +17,17 @@ from model.network import Network
 def cleanup_output(output_path: str):
     # Cleanup previous export
     if os.path.exists(output_path) and os.path.isdir(output_path):
-        shutil.rmtree(output_path)
-    os.mkdir(output_path)
+        for f in os.listdir(output_path):
+            file_path = os.path.join(output_path, f)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(e)
+    else:
+        os.mkdir(output_path)
 
 
 def merge_duplicate_node_names(network: Network):
@@ -168,7 +177,7 @@ if __name__ == '__main__':
         '../data/SIDER/graph.json',
         '../data/DGIdb/graph.json',
         '../data/Westra_etal_2017/graph.json',
-        # '../data/SuperDrug2/graph.json',
+        '../data/SuperDrug2/graph.json',
         # '../data/PubMed/graph.json',
     ]
     # Fusion

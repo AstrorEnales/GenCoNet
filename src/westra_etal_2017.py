@@ -48,17 +48,18 @@ with io.open(file_cis, 'r', encoding='utf-8', newline='') as f:
     for row in reader:
         if value_empty(row[1]) or value_empty(row[13]):
             continue
-        variant = Variant([row[1]], [])
+        variant = Variant(['dbSNP:%s' % row[1]], [])
         network.add_node(variant)
-        gene = Gene([row[13]], [])
-        network.add_node(gene)
-        rel = {
-            'source': 'PMID:24013639',
-            'pvalue': row[0],
-            'snp_chr': row[2],
-            'cis_trans': row[7]
-        }
-        network.add_edge(Edge(next(iter(gene.ids)), next(iter(variant.ids)), 'EQTL', rel))
+        for gene_id in row[13].split(','):
+            gene = Gene(['HGNC:%s' % gene_id], [])
+            network.add_node(gene)
+            rel = {
+                'source': 'PMID:24013639',
+                'pvalue': row[0],
+                'snp_chr': row[2],
+                'cis_trans': row[7]
+            }
+            network.add_edge(Edge(next(iter(gene.ids)), next(iter(variant.ids)), 'EQTL', rel))
 
 with io.open(file_trans, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
@@ -66,17 +67,18 @@ with io.open(file_trans, 'r', encoding='utf-8', newline='') as f:
     for row in reader:
         if value_empty(row[1]) or value_empty(row[16]):
             continue
-        variant = Variant([row[1]], [])
+        variant = Variant(['dbSNP:%s' % row[1]], [])
         network.add_node(variant)
-        gene = Gene([row[16]], [])
-        network.add_node(gene)
-        rel = {
-            'source': 'PMID:24013639',
-            'pvalue': row[0],
-            'snp_chr': row[2],
-            'cis_trans': 'trans'  # row[7] TODO: always "-"?
-        }
-        network.add_edge(Edge(next(iter(gene.ids)), next(iter(variant.ids)), 'EQTL', rel))
+        for gene_id in row[16].split(','):
+            gene = Gene(['HGNC:%s' % gene_id], [])
+            network.add_node(gene)
+            rel = {
+                'source': 'PMID:24013639',
+                'pvalue': row[0],
+                'snp_chr': row[2],
+                'cis_trans': 'trans'  # row[7] TODO: always "-"?
+            }
+            network.add_edge(Edge(next(iter(gene.ids)), next(iter(variant.ids)), 'EQTL', rel))
 
 with io.open('../data/Westra_etal_2017/graph.json', 'w', encoding='utf-8', newline='') as f:
     f.write(json.dumps(network.to_dict(), indent=2))

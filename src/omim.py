@@ -68,7 +68,7 @@ with io.open('../data/OMIM/filtered_associations.csv', 'r', encoding='utf-8', ne
     for row in reader:
         disease = Disease(['OMIM:%s' % row[2]], [])
         network.add_node(disease)
-        gene = Gene(['HGNCSymbol:%s' % row[5]], [])  # , 'OMIM:%s' % row[6]
+        gene = Gene(['HGNC:%s' % row[5]], [])  # , 'OMIM:%s' % row[6]
         network.add_node(gene)
         rel = {
             'source': 'OMIM',

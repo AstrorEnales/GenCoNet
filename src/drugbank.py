@@ -184,7 +184,7 @@ for row in targets_results:
         drug_ids.extend(external_id_lookup[row[0]])
     drug = Drug(drug_ids, [row[1]])
     network.add_node(drug)
-    gene_ids = ['HGNCSymbol:%s' % row[2]]
+    gene_ids = ['HGNC:%s' % row[2]]
     if row[4] is not None and len(row[4]) > 0:
         gene_ids.append(row[4])
     gene = Gene(gene_ids, [row[3]])

@@ -63,14 +63,17 @@ with io.open('../data/GWAS-Catalog/gwas_catalog_associations.tsv', 'r', encoding
         if row[14] is None or len(row[14]) == 0:
             continue
         gene_ids = row[14].replace(' x ', ', ').replace(' - ', ', ').split(', ')
+        print(row[14])
+        print('\t', gene_ids)
         for gene_id in gene_ids:
             if loc_pattern.fullmatch(gene_id) is not None:
                 continue
-            gene = Gene(['HGNCSymbol:%s' % gene_id], [])
+            gene = Gene(['HGNC:%s' % gene_id], [])
             network.add_node(gene)
-            variant = Variant(['dbSNP:%s' % row[21]], [])
-            network.add_node(variant)
-            network.add_edge(Edge(gene.id, variant.id, 'CODES', {'source': 'GWASCatalog', 'pmid': row[1]}))
+            for variant_id in {x.strip() for x in row[21].split(';')}:
+                variant = Variant(['dbSNP:%s' % variant_id], [])
+                network.add_node(variant)
+                network.add_edge(Edge(gene.id, variant.id, 'CODES', {'source': 'GWASCatalog', 'pmid': row[1]}))
 
 with io.open('../data/GWAS-Catalog/graph.json', 'w', encoding='utf-8', newline='') as f:
     f.write(json.dumps(network.to_dict(), indent=2))

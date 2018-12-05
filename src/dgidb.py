@@ -31,7 +31,7 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
             continue
         if row[8] is None or len(row[8]) == 0:
             continue
-        gene_ids = {'HGNCSymbol:%s' % row[0]}
+        gene_ids = {'HGNC:%s' % row[0]}
         if row[2] is not None and len(row[2]) > 0:
             gene_ids.add('Entrez:%s' % row[2])
         gene = Gene(gene_ids, [])

@@ -33,22 +33,32 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter=',', quotechar='"')
     next(reader, None)
     for row in reader:
-        # SUPERDRUG_ID
-        # PREFERRED_NAME
-        # ATC
-        # CHEMBL_ID
-        # DRUGBANK_ID
-        # KEGG_ID
-        # PUBCHEM_CID
-        # CASRN
-        drug_ids = ['SuperDrug:%s' % row[0]]
-        if row[2] != not_available_text:
-            drug_ids.extend(['AtcCode:%s' % x for x in row[2].split(';')])
+        # 0 SUPERDRUG_ID
+        # 1 PREFERRED_NAME
+        # 2 ATC
+        # 3 CHEMBL_ID
+        # 4 DRUGBANK_ID
+        # 5 KEGG_ID
+        # 6 PUBCHEM_CID
+        # 7 CASRN
+        drug_ids = []  # ['SuperDrug:%s' % row[0]]
+        # if row[2] != not_available_text:
+        #     drug_ids.extend(['AtcCode:%s' % x for x in row[2].split(';')])
+        if row[3] != not_available_text:
+            for chembl_id in {x.strip() for x in row[3].split(';')}:
+                drug_ids.append('ChEMBL:%s' % chembl_id)
         if row[4] != not_available_text:
             drug_ids.append('DrugBank:%s' % row[4])
-        if row[5] != not_available_text:
-            drug_ids.append('Kegg:%s' % row[5])
-        network.add_node(Drug(drug_ids, [row[1]]))
+        else:
+            # For now, only use mappings including DrugBank
+            continue
+        # if row[5] != not_available_text:
+        #     drug_ids.append('Kegg:%s' % row[5])
+        if row[6] != not_available_text:
+            for pubchem_id in {x.strip() for x in row[6].split(';')}:
+                drug_ids.append('PubChem:CID%s' % pubchem_id)
+        if len(drug_ids) > 1:
+            network.add_node(Drug(drug_ids, [row[1]]))
 
 with io.open('../data/SuperDrug2/graph.json', 'w', encoding='utf-8', newline='') as f:
     f.write(json.dumps(network.to_dict(), indent=2))

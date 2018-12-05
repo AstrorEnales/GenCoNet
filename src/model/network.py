@@ -89,9 +89,7 @@ class Network:
                 del self.edge_lookup[edge.label][edge.id]
 
     def prune(self):
-        """
-        Remove nodes that are not connected to drugs and therefore of no interest.
-        """
+        '''
         # Remove genes of no interest
         targeted_genes_id = {x.target for x in self.edge_lookup['TARGETS'].values()}
         for gene in set(self.get_nodes_by_label('Gene')):
@@ -102,6 +100,7 @@ class Network:
         for variant in set(self.get_nodes_by_label('Variant')):
             if coded_variants_id.isdisjoint(variant.ids):
                 self.delete_node(variant)
+        '''
         # Remove singletons
         for node in set(self.nodes.values()):
             if not any([_id in self.edge_source_lookup or _id in self.edge_target_lookup for _id in node.ids]):
