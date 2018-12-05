@@ -36,7 +36,7 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
             gene_ids.add('Entrez:%s' % row[2])
         gene = Gene(gene_ids, [])
         network.add_node(gene)
-        drug = Drug(['CHEMBL:%s' % row[8][len('CHEMBL')::]], [row[7]])
+        drug = Drug(['ChEMBL:%s' % row[8]], [row[7]])
         network.add_node(drug)
         rel = {
             'source': 'DGIdb,%s' % row[3],
