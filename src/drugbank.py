@@ -33,9 +33,11 @@ if not os.path.exists(file):
             with open(file, 'wb') as f:
                 f.write(z.read(date_filename[0]))
 
+identifiers_output_file = '../data/DrugBank/drug_identifiers.csv'
 targets_output_file = '../data/DrugBank/drugs_target_human_genes.csv'
 interactions_output_file = '../data/DrugBank/drug_interactions.csv'
-if not os.path.exists(targets_output_file) or not os.path.exists(interactions_output_file):
+if not os.path.exists(targets_output_file) or not os.path.exists(interactions_output_file) \
+        or not os.path.exists(identifiers_output_file):
     positive = ['inducer', 'agonist', 'activator', 'partial agonist', 'stimulator', 'positive modulator',
                 'positive allosteric modulator']
     negative = ['blocker', 'antagonist', 'antibody', 'weak inhibitor', 'suppressor', 'partial antagonist',
@@ -50,6 +52,20 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
         if drugbank_id is None:
             continue
         drug_name = drug_node.find(ns + 'name').text
+        # Collect all external identifiers
+        external_ids = set()
+        external_identifiers_node = drug_node.find(ns + 'external-identifiers')
+        if external_identifiers_node is not None:
+            for external_identifier_node in external_identifiers_node.findall(ns + 'external-identifier'):
+                # ChEMBL, Wikipedia, UniProtKB, PharmGKB, KEGG Drug, PubChem Compound
+                source = external_identifier_node.find(ns + 'resource').text.strip()
+                identifier = external_identifier_node.find(ns + 'identifier').text.strip()
+                if source == 'ChEMBL':
+                    external_ids.add('ChEMBL:%s' % identifier)
+                elif source == 'KEGG Drug':
+                    external_ids.add('Kegg:%s' % identifier)
+                elif source == 'PubChem Compound':
+                    external_ids.add('PubChem:CID%s' % identifier)
         # Collect all gene targets for the drug
         targets = []
         targets_node = drug_node.find(ns + 'targets')
@@ -92,10 +108,11 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
                 id2 = interaction_node.find(ns + 'drugbank-id').text
                 description = interaction_node.find(ns + 'description').text
                 interactions.append([id2, description])
-        drugs[drugbank_id] = [drug_name, targets, interactions]
+        drugs[drugbank_id] = [drug_name, targets, interactions, external_ids]
 
     targets_results = []
     interactions_results = []
+    external_id_results = []
     for drugbank_id in sorted(drugs.keys()):
         drug = drugs[drugbank_id]
         for target in drug[1]:
@@ -108,6 +125,18 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
                 interactions_results.append(
                     [drugbank_id, drug[0], interaction[0], drugs[interaction[0]][0], interaction[1]])
 
+        chembl_id = None
+        kegg_id = None
+        pubchem_id = None
+        for external_id in drug[3]:
+            if external_id.startswith('ChEMBL:'):
+                chembl_id = external_id
+            elif external_id.startswith('Kegg:'):
+                kegg_id = external_id
+            elif external_id.startswith('PubChem:'):
+                pubchem_id = external_id
+        external_id_results.append([drugbank_id, chembl_id, kegg_id, pubchem_id])
+
     with io.open(targets_output_file, 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
         writer.writerow(['drugbank_id', 'drug_name', 'gene', 'gene_name', 'hgnc_id', 'known_action', 'actions',
@@ -118,6 +147,11 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
         writer = csv.writer(f, delimiter=',', quotechar='"')
         writer.writerow(['drugbank_id1', 'drug_name1', 'drugbank_id2', 'drug_name2', 'description'])
         for row in interactions_results:
+            writer.writerow(row)
+    with io.open(identifiers_output_file, 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow(['drugbank_id', 'ChEMBL', 'KEGG Drug', 'PubChem Compound'])
+        for row in external_id_results:
             writer.writerow(row)
 else:
     targets_results = []
@@ -132,10 +166,23 @@ else:
         next(reader, None)
         for row in reader:
             interactions_results.append(row)
+        external_id_results = []
+    with io.open(identifiers_output_file, 'r', encoding='utf-8', newline='') as f:
+        reader = csv.reader(f, delimiter=',', quotechar='"')
+        next(reader, None)
+        for row in reader:
+            external_id_results.append(row)
+
+external_id_lookup = {}
+for row in external_id_results:
+    external_id_lookup[row[0]] = [x for x in row[1::] if x is not None and len(x) > 0]
 
 network = Network()
 for row in targets_results:
-    drug = Drug(['DrugBank:%s' % row[0]], [row[1]])
+    drug_ids = ['DrugBank:%s' % row[0]]
+    if row[0] in external_id_lookup:
+        drug_ids.extend(external_id_lookup[row[0]])
+    drug = Drug(drug_ids, [row[1]])
     network.add_node(drug)
     gene_ids = ['HGNCSymbol:%s' % row[2]]
     if row[4] is not None and len(row[4]) > 0:
