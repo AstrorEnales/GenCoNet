@@ -92,6 +92,16 @@ def save_network(network: Network, config):
             writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'], e.attributes['pmid'],
                              network.get_node_by_id(e.target).id, e.label])
 
+    # Save EQTL relationships
+    with io.open(os.path.join(output_path, 'rel_EQTL.csv'), 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Node-ID)', 'source:string', 'pvalue:string', 'snp_chr:string', 'cis_trans:string',
+                         ':END_ID(Node-ID)', ':TYPE'])
+        for e in network.get_edges_by_label('EQTL'):
+            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'], e.attributes['pvalue'],
+                             e.attributes['snp_chr'], e.attributes['cis_trans'], network.get_node_by_id(e.target).id,
+                             e.label])
+
     # Save INTERACTS relationships
     with io.open(os.path.join(output_path, 'rel_INTERACTS.csv'), 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
@@ -119,6 +129,7 @@ def save_network(network: Network, config):
                 '--relationships rel_ASSOCIATES_WITH.csv ' +
                 '--relationships rel_INDUCES.csv ' +
                 '--relationships rel_CODES.csv ' +
+                '--relationships rel_EQTL.csv ' +
                 '--relationships rel_INTERACTS.csv > import.log\n')
         f.write('net start neo4j\n')
         f.write(os.path.join(config['Neo4j']['bin-path'], 'cypher-shell'))
@@ -133,6 +144,7 @@ def save_network(network: Network, config):
                 '--relationships rel_TARGETS.csv ' +
                 '--relationships rel_ASSOCIATES_WITH.csv ' +
                 '--relationships rel_CODES.csv ' +
+                '--relationships rel_EQTL.csv ' +
                 '--relationships rel_INTERACTS.csv > import.log\n')
 
 
@@ -155,6 +167,7 @@ if __name__ == '__main__':
         '../data/HuGE-Navigator/graph.json',
         '../data/SIDER/graph.json',
         '../data/DGIdb/graph.json',
+        '../data/Westra_etal_2017/graph.json',
         # '../data/SuperDrug2/graph.json',
         # '../data/PubMed/graph.json',
     ]
