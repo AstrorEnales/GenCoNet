@@ -128,7 +128,7 @@ def save_network(network: Network, config):
         f.write('@echo off\n')
         f.write('net stop neo4j\n')
         f.write('rmdir /s "%s"\n' % os.path.join(config['Neo4j']['database-path'], config['Neo4j']['database-name']))
-        f.write(os.path.join(config['Neo4j']['bin-path'], 'neo4j-admin'))
+        f.write('CALL ' + os.path.join(config['Neo4j']['bin-path'], 'neo4j-admin'))
         f.write(' import ' +
                 '--database %s ' % config['Neo4j']['database-name'] +
                 '--nodes nodes.csv ' +
