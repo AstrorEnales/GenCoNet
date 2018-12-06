@@ -69,7 +69,7 @@ if __name__ == '__main__':
         f.write('<tbody>\n')
         drug_multiple_names_count = 0
         for drug in network.get_nodes_by_label('Drug'):
-            if not name_utils.drug_names_synonym(drug.names):
+            if not name_utils.node_names_synonym(drug.names):
                 drug_multiple_names_count += 1
                 f.write('<tr><td>%s</td><td>%s</td></tr>\n' % (node_ids_to_links(drug.ids), '<br/>'.join(drug.names)))
         f.write('</tbody>\n</table>\n')

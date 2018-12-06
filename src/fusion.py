@@ -32,7 +32,7 @@ def cleanup_output(output_path: str):
 
 def merge_duplicate_node_names(network: Network):
     for node in network.nodes.values():
-        node.names = name_utils.normalize_drug_names(node.names)
+        node.names = name_utils.normalize_node_names(node.names)
 
 
 def save_network(network: Network, config):

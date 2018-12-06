@@ -3,7 +3,7 @@ import difflib
 from typing import Set
 
 
-def normalize_drug_names(names: Set[str]) -> Set[str]:
+def normalize_node_names(names: Set[str]) -> Set[str]:
     if len(names) <= 1:
         return names
     similar_names = {}
@@ -23,10 +23,14 @@ def normalize_drug_names(names: Set[str]) -> Set[str]:
                 max_upper_count = upper_count
                 max_index = i
         result.add(candidates[max_index])
+    lower_results = {x.lower() for x in result}
+    for name in list(result):
+        if ', ' in name and ' '.join(name.split(', ')[::-1]).lower() in lower_results:
+            result.remove(name)
     return result
 
 
-def drug_names_synonym(names: Set[str]) -> bool:
+def node_names_synonym(names: Set[str]) -> bool:
     names = sorted({x.lower() for x in names})
     if len(names) == 1:
         return True
