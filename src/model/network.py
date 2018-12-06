@@ -88,6 +88,12 @@ class Network:
             if edge.id in self.edge_lookup[edge.label]:
                 del self.edge_lookup[edge.label][edge.id]
 
+    def delete_edge(self, edge: Edge):
+        del self.edges[edge.id]
+        del self.edge_lookup[edge.label][edge.id]
+        del self.edge_source_lookup[edge.source][edge.id]
+        del self.edge_target_lookup[edge.target][edge.id]
+
     def prune(self):
         '''
         # Remove genes of no interest
@@ -105,6 +111,32 @@ class Network:
         for node in set(self.nodes.values()):
             if not any([_id in self.edge_source_lookup or _id in self.edge_target_lookup for _id in node.ids]):
                 self.delete_node(node)
+
+    def merge_duplicate_edges(self):
+        for label in self.edge_lookup:
+            edges = list(self.edge_lookup[label].values())
+            edge_source_target_lookup = {}
+            for edge in edges:
+                key = self.nodes[edge.source].id + '$' + self.nodes[edge.target].id
+                if key not in edge_source_target_lookup:
+                    edge_source_target_lookup[key] = []
+                edge_source_target_lookup[key].append(edge)
+            for source_target_key in edge_source_target_lookup:
+                edges_subset = edge_source_target_lookup[source_target_key]
+                for i in range(0, len(edges_subset) - 1):
+                    edge_a = edges_subset[i]
+                    for j in range(i + 1, len(edges_subset)):
+                        edge_b = edges_subset[j]
+                        identical = len(edge_a.attributes.keys()) == len(edge_b.attributes.keys())
+                        if identical:
+                            for key in edge_a.attributes.keys():
+                                if key not in edge_b.attributes or edge_a.attributes[key] != edge_b.attributes[key]:
+                                    identical = False
+                                    break
+                        if identical:
+                            print(edge_a, edge_b)
+                            self.delete_edge(edge_a)
+                            break
 
     def to_dict(self) -> {}:
         result = {

@@ -181,11 +181,14 @@ if __name__ == '__main__':
         # '../data/PubMed/graph.json',
     ]
     # Fusion
+    print('[INFO] Network fusion')
     for graph in graphs:
+        print('[INFO] Add network', graph)
         with io.open(graph, 'r', encoding='utf-8', newline='') as f:
             g = json.loads(f.read())
             network.load_from_dict(g)
     # Mapping
+    print('[INFO] Add disease mappings')
     all_disease_ids = set()
     for node in network.get_nodes_by_label('Disease'):
         all_disease_ids.update(node.ids)
@@ -194,9 +197,14 @@ if __name__ == '__main__':
         if len(mapped_ids) > 0:
             network.add_node(Disease(mapped_ids, mapped_names))
     # Cleanup
+    print('[INFO] Prune network')
     network.prune()
+    print('[INFO] Merge duplicate node names')
     merge_duplicate_node_names(network)
+    print('[INFO] Merge duplicate edges')
+    network.merge_duplicate_edges()
     # Export
+    print('[INFO] Export network')
     cleanup_output(config['output-path'])
     with io.open(os.path.join(config['output-path'], 'graph.json'), 'w', encoding='utf-8', newline='') as f:
         f.write(json.dumps(network.to_dict(), separators=(',', ':')))

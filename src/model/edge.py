@@ -1,7 +1,10 @@
+from typing import Dict, Any
+
+
 class Edge:
     internal_id = 1
 
-    def __init__(self, source: str, target: str, label: str, attributes: {}):
+    def __init__(self, source: str, target: str, label: str, attributes: Dict[str, Any]):
         self.source = source
         self.target = target
         self.label = label
