@@ -1,6 +1,7 @@
 from model.disease import Disease
 from model.drug import Drug
 from model.gene import Gene
+from model.go_class import GOClass
 from model.node import Node
 from model.edge import Edge
 from model.variant import Variant
@@ -37,6 +38,12 @@ class Network:
             if node.label == label:
                 result.add(node)
         return list(result)
+
+    def node_labels(self) -> List[str]:
+        return sorted({node.label for node in self.get_nodes()})
+
+    def edge_labels(self) -> List[str]:
+        return sorted(self.edge_lookup.keys())
 
     def add_edge(self, edge: Edge):
         self.edges[edge.id] = edge
@@ -134,7 +141,6 @@ class Network:
                                     identical = False
                                     break
                         if identical:
-                            print(edge_a, edge_b)
                             self.delete_edge(edge_a)
                             break
 
@@ -159,6 +165,8 @@ class Network:
                 self.add_node(Drug(node['ids'], node['names']))
             elif node['_label'] == 'Gene':
                 self.add_node(Gene(node['ids'], node['names']))
+            elif node['_label'] == 'GOClass':
+                self.add_node(GOClass(node['ids'], node['names']))
             elif node['_label'] == 'Variant':
                 self.add_node(Variant(node['ids'], node['names']))
             elif node['_label'] == 'Disease':

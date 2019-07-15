@@ -44,6 +44,31 @@ def save_network(network: Network, config):
         for n in set(network.nodes.values()):
             writer.writerow([n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
 
+    # Save HAS_MOLECULAR_FUNCTION relationships
+    with io.open(os.path.join(output_path, 'rel_HAS_MOLECULAR_FUNCTION.csv'), 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
+        for e in network.get_edges_by_label('HAS_MOLECULAR_FUNCTION'):
+            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
+                             network.get_node_by_id(e.target).id, e.label])
+
+    # Save BELONGS_TO_BIOLOGICAL_PROCESS relationships
+    with io.open(os.path.join(output_path, 'rel_BELONGS_TO_BIOLOGICAL_PROCESS.csv'), 'w', encoding='utf-8',
+                 newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
+        for e in network.get_edges_by_label('BELONGS_TO_BIOLOGICAL_PROCESS'):
+            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
+                             network.get_node_by_id(e.target).id, e.label])
+
+    # Save IN_CELLULAR_COMPONENT relationships
+    with io.open(os.path.join(output_path, 'rel_IN_CELLULAR_COMPONENT.csv'), 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
+        for e in network.get_edges_by_label('IN_CELLULAR_COMPONENT'):
+            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
+                             network.get_node_by_id(e.target).id, e.label])
+
     # Save INDICATES relationships
     with io.open(os.path.join(output_path, 'rel_INDICATES.csv'), 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
@@ -120,10 +145,8 @@ def save_network(network: Network, config):
                              network.get_node_by_id(e.target).id, e.label])
 
     with io.open(os.path.join(output_path, 'create_indices.cypher'), 'w', encoding='utf-8', newline='') as f:
-        f.write('create constraint on (p:Drug) assert p._id is unique;\n')
-        f.write('create constraint on (p:Gene) assert p._id is unique;\n')
-        f.write('create constraint on (p:Variant) assert p._id is unique;\n')
-        f.write('create constraint on (p:Disease) assert p._id is unique;\n')
+        for node_label in network.node_labels():
+            f.write('create constraint on (p:%s) assert p._id is unique;\n' % node_label)
     with io.open(os.path.join(output_path, 'import_admin.bat'), 'w', encoding='utf-8', newline='') as f:
         f.write('@echo off\n')
         f.write('net stop neo4j\n')
@@ -132,29 +155,19 @@ def save_network(network: Network, config):
         f.write(' import ' +
                 '--database %s ' % config['Neo4j']['database-name'] +
                 '--nodes nodes.csv ' +
-                '--relationships rel_INDICATES.csv ' +
-                '--relationships rel_CONTRAINDICATES.csv ' +
-                '--relationships rel_TARGETS.csv ' +
-                '--relationships rel_ASSOCIATES_WITH.csv ' +
-                '--relationships rel_INDUCES.csv ' +
-                '--relationships rel_CODES.csv ' +
-                '--relationships rel_EQTL.csv ' +
-                '--relationships rel_INTERACTS.csv > import.log\n')
+                ' '.join(['--relationships rel_%s.csv' % x for x in network.edge_labels()]) +
+                ' > import.log\n')
         f.write('net start neo4j\n')
         f.write(os.path.join(config['Neo4j']['bin-path'], 'cypher-shell'))
-        f.write(' -u neo4j -p root --non-interactive < create_indices.cypher 1>> import.log 2>&1\n')
+        f.write(' -u %s -p %s --non-interactive < create_indices.cypher 1>> import.log 2>&1\n'
+                % (config['Neo4j']['user'], config['Neo4j']['password']))
     with io.open(os.path.join(output_path, 'import_admin.sh'), 'w', encoding='utf-8', newline='') as f:
         f.write(os.path.join(config['Neo4j']['bin-path'], 'neo4j-admin'))
         f.write(' import ' +
                 '--database %s ' % config['Neo4j']['database-name'] +
                 '--nodes nodes.csv ' +
-                '--relationships rel_INDICATES.csv ' +
-                '--relationships rel_CONTRAINDICATES.csv ' +
-                '--relationships rel_TARGETS.csv ' +
-                '--relationships rel_ASSOCIATES_WITH.csv ' +
-                '--relationships rel_CODES.csv ' +
-                '--relationships rel_EQTL.csv ' +
-                '--relationships rel_INTERACTS.csv > import.log\n')
+                ' '.join(['--relationships rel_%s.csv' % x for x in network.edge_labels()]) +
+                ' > import.log\n')
 
 
 if __name__ == '__main__':
@@ -178,6 +191,8 @@ if __name__ == '__main__':
         '../data/DGIdb/graph.json',
         '../data/Westra_etal_2017/graph.json',
         '../data/SuperDrug2/graph.json',
+        '../data/UniprotKB/graph.json',
+        '../data/GO/graph.json',
         # '../data/PubMed/graph.json',
     ]
     # Fusion

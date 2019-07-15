@@ -2,7 +2,9 @@
   "Neo4j": {
     "bin-path": "D:/Portable/neo4j-community-3.2.8/bin/",
     "database-path": "D:/Portable/neo4j-community-3.2.8/data/databases/",
-    "database-name": "graph.db"
+    "database-name": "graph.db",
+    "user": "neo4j",
+    "password": "root"
   },
   "output-path": "../output/"
 }

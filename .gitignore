@@ -6,6 +6,9 @@ data/*/*.tsv
 data/*/*.csv
 data/*/*.gz
 data/*/*.json
+data/*/*.dat
+data/*/*.owl
+data/*/*.gaf
 output/
 __pycache__
 *.cache
