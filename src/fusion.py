@@ -136,6 +136,7 @@ if __name__ == '__main__':
         '../data/SuperDrug2/graph.json',
         '../data/UniprotKB/graph.json',
         '../data/GO/graph.json',
+        '../data/PharmGKB/graph.json',
         # '../data/PubMed/graph.json',
     ]
     # Fusion
