@@ -44,105 +44,48 @@ def save_network(network: Network, config):
         for n in set(network.nodes.values()):
             writer.writerow([n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
 
-    # Save HAS_MOLECULAR_FUNCTION relationships
-    with io.open(os.path.join(output_path, 'rel_HAS_MOLECULAR_FUNCTION.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('HAS_MOLECULAR_FUNCTION'):
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
-                             network.get_node_by_id(e.target).id, e.label])
+    edge_metadata = {
+        'HAS_MOLECULAR_FUNCTION': [['source:string'], ['source']],
+        'BELONGS_TO_BIOLOGICAL_PROCESS': [['source:string'], ['source']],
+        'IN_CELLULAR_COMPONENT': [['source:string'], ['source']],
+        'INDICATES': [['source:string'], ['source']],
+        'CONTRAINDICATES': [['source:string'], ['source']],
+        'INDUCES': [['source:string'], ['source']],
+        'CODES': [['source:string', 'pmid:int'], ['source', 'pmid']],
+        'EQTL': [
+            ['source:string', 'pvalue:string', 'snp_chr:string', 'cis_trans:string'],
+            ['source', 'pvalue', 'snp_chr', 'cis_trans']
+        ],
+        'INTERACTS': [['source:string', 'description:string'], ['source', 'description']],
+        'TARGETS': [
+            ['source:string', 'known_action:boolean', 'actions:string[]', 'simplified_action:string'],
+            [
+                'source',
+                lambda attr: ('true' if attr['known_action'] else 'false') if 'known_action' in attr else None,
+                lambda attr: ';'.join(attr['actions']),
+                'simplified_action'
+            ]
+        ],
+        'ASSOCIATES_WITH': [
+            ['source:string', 'num_pmids:int', 'num_snps:int', 'score:string'],
+            ['source', 'num_pmids', 'num_snps', 'score']
+        ]
+    }
 
-    # Save BELONGS_TO_BIOLOGICAL_PROCESS relationships
-    with io.open(os.path.join(output_path, 'rel_BELONGS_TO_BIOLOGICAL_PROCESS.csv'), 'w', encoding='utf-8',
-                 newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('BELONGS_TO_BIOLOGICAL_PROCESS'):
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
-                             network.get_node_by_id(e.target).id, e.label])
-
-    # Save IN_CELLULAR_COMPONENT relationships
-    with io.open(os.path.join(output_path, 'rel_IN_CELLULAR_COMPONENT.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('IN_CELLULAR_COMPONENT'):
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
-                             network.get_node_by_id(e.target).id, e.label])
-
-    # Save INDICATES relationships
-    with io.open(os.path.join(output_path, 'rel_INDICATES.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('INDICATES'):
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
-                             network.get_node_by_id(e.target).id, e.label])
-
-    # Save CONTRAINDICATES relationships
-    with io.open(os.path.join(output_path, 'rel_CONTRAINDICATES.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('CONTRAINDICATES'):
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
-                             network.get_node_by_id(e.target).id, e.label])
-
-    # Save TARGETS relationships
-    with io.open(os.path.join(output_path, 'rel_TARGETS.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', 'known_action:boolean', 'actions:string[]',
-                         'simplified_action:string', ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('TARGETS'):
-            known_action = ('true' if e.attributes['known_action'] else 'false') \
-                if 'known_action' in e.attributes else None
-            simplified_action = e.attributes['simplified_action'] if 'simplified_action' in e.attributes else None
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
-                             known_action, ';'.join(e.attributes['actions']), simplified_action,
-                             network.get_node_by_id(e.target).id, e.label])
-
-    # Save ASSOCIATES_WITH relationships
-    with io.open(os.path.join(output_path, 'rel_ASSOCIATES_WITH.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', 'num_pmids:int', 'num_snps:int', 'score:string',
-                         ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('ASSOCIATES_WITH'):
-            num_pmids = e.attributes['num_pmids'] if 'num_pmids' in e.attributes else None
-            num_snps = e.attributes['num_snps'] if 'num_snps' in e.attributes else None
-            score = e.attributes['score'] if 'score' in e.attributes else None
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'], num_pmids, num_snps, score,
-                             network.get_node_by_id(e.target).id, e.label])
-
-    # Save INDUCES relationships
-    with io.open(os.path.join(output_path, 'rel_INDUCES.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('INDUCES'):
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'],
-                             network.get_node_by_id(e.target).id, e.label])
-
-    # Save CODES relationships
-    with io.open(os.path.join(output_path, 'rel_CODES.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', 'pmid:int', ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('CODES'):
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'], e.attributes['pmid'],
-                             network.get_node_by_id(e.target).id, e.label])
-
-    # Save EQTL relationships
-    with io.open(os.path.join(output_path, 'rel_EQTL.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', 'pvalue:string', 'snp_chr:string', 'cis_trans:string',
-                         ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('EQTL'):
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'], e.attributes['pvalue'],
-                             e.attributes['snp_chr'], e.attributes['cis_trans'], network.get_node_by_id(e.target).id,
-                             e.label])
-
-    # Save INTERACTS relationships
-    with io.open(os.path.join(output_path, 'rel_INTERACTS.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow([':START_ID(Node-ID)', 'source:string', 'description:string', ':END_ID(Node-ID)', ':TYPE'])
-        for e in network.get_edges_by_label('INTERACTS'):
-            writer.writerow([network.get_node_by_id(e.source).id, e.attributes['source'], e.attributes['description'],
-                             network.get_node_by_id(e.target).id, e.label])
+    # Save relationships
+    for x in edge_metadata:
+        with io.open(os.path.join(output_path, 'rel_%s.csv' % x), 'w', encoding='utf-8', newline='') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='"')
+            writer.writerow([':START_ID(Node-ID)'] + edge_metadata[x][0] + [':END_ID(Node-ID)', ':TYPE'])
+            for e in network.get_edges_by_label(x):
+                values = []
+                for l in edge_metadata[x][1]:
+                    if isinstance(l, type(lambda: 0)):
+                        values.append(l(e.attributes))
+                    else:
+                        values.append(e.attributes[l] if l in e.attributes else None)
+                writer.writerow(
+                    [network.get_node_by_id(e.source).id] + values + [network.get_node_by_id(e.target).id, e.label])
 
     with io.open(os.path.join(output_path, 'create_indices.cypher'), 'w', encoding='utf-8', newline='') as f:
         for node_label in network.node_labels():

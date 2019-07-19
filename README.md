@@ -23,6 +23,8 @@ Under development
         - Run `omim.py`
         - Run `superdrug2.py`
         - Run `pubmed.py`
+        - Run `uniprotkb.py`
+        - Run `gene_ontology.py`
      2. Fusion
         - Run `fusion.py`
      3. Import database into Neo4j or directly use `[output-path]/graph.json`
