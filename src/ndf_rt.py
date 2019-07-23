@@ -72,7 +72,7 @@ network = Network()
 for concept_code in sorted(concept_defs.keys()):
     concept = concept_defs[concept_code]
     if concept['kind'] == kind_defs_rev['DRUG_KIND']:
-        drug_ids = ['NDF-RT:%s' % concept['code']]
+        drug_ids = ['NDFRT:%s' % concept['code']]
         drug_names = [concept['name']]
         for prop in concept['properties']:
             if property_defs[prop[0]] == 'RxNorm_CUI':
@@ -88,23 +88,23 @@ for concept_code in sorted(concept_defs.keys()):
         network.add_node(drug)
         for role in concept['roles']:
             role_name = role_defs[role[0]]
-            rel = {'source': 'NDF-RT'}
+            rel = {'source': 'NDFRT'}
             if role_name == 'induces {NDFRT}':
-                network.add_edge(Edge(next(iter(drug.ids)), 'NDF-RT:%s' % role[1], 'INDUCES', rel))
+                network.add_edge(Edge(next(iter(drug.ids)), 'NDFRT:%s' % role[1], 'INDUCES', rel))
             elif role_name == 'CI_with {NDFRT}':
-                network.add_edge(Edge(next(iter(drug.ids)), 'NDF-RT:%s' % role[1], 'CONTRAINDICATES', rel))
+                network.add_edge(Edge(next(iter(drug.ids)), 'NDFRT:%s' % role[1], 'CONTRAINDICATES', rel))
             elif role_name == 'may_treat {NDFRT}':
-                network.add_edge(Edge(next(iter(drug.ids)), 'NDF-RT:%s' % role[1], 'INDICATES', rel))
+                network.add_edge(Edge(next(iter(drug.ids)), 'NDFRT:%s' % role[1], 'INDICATES', rel))
     elif concept['kind'] == kind_defs_rev['DISEASE_KIND']:
-        disease_ids = ['NDF-RT:%s' % concept['code']]
+        disease_ids = ['NDFRT:%s' % concept['code']]
         disease_names = [concept['name']]
         for prop in concept['properties']:
             if property_defs[prop[0]] == 'SNOMED_CID':
-                disease_ids.append('SnomedCT:%s' % prop[1])
+                disease_ids.append('SnoMedCT:%s' % prop[1])
             elif property_defs[prop[0]] == 'UMLS_CUI':
                 disease_ids.append('UMLS:%s' % prop[1])
             elif property_defs[prop[0]] == 'MeSH_CUI':
-                disease_ids.append('MESH:%s' % prop[1])
+                disease_ids.append('MeSH:%s' % prop[1])
             elif property_defs[prop[0]] == 'Synonym':
                 disease_names.append(prop[1])
         disease_names = [x.replace('[Disease/Finding]', '').strip() for x in disease_names]

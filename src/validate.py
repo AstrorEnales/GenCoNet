@@ -18,7 +18,7 @@ def node_ids_to_links(node_ids):
             result += '<a href="https://www.drugbank.ca/%s" target="_blank">%s</a>' % (suffix, node_id)
         elif prefix == 'DrugCentral':
             result += '<a href="http://drugcentral.org/drugcard/%s" target="_blank">%s</a>' % (suffix, node_id)
-        elif prefix == 'MESH':
+        elif prefix == 'MeSH':
             result += '<a href="http://identifiers.org/mesh/%s" target="_blank">%s</a>' % (suffix, node_id)
         elif prefix == 'UMLS':
             result += '<a href="http://linkedlifedata.com/resource/umls/id/%s" target="_blank">%s</a>' % (suffix, node_id)

@@ -30,10 +30,10 @@ with io.open(id_mapping_file, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     for row in reader:
         if row[1] == 'HGNC':
-            gene = Gene(['UniprotKB:%s' % row[0], row[2]], [])
+            gene = Gene(['UniProtKB:%s' % row[0], row[2]], [])
             network.add_node(gene)
         elif row[1] == 'Gene_Name':
-            gene = Gene(['UniprotKB:%s' % row[0], 'HGNC:%s' % row[2]], [])
+            gene = Gene(['UniProtKB:%s' % row[0], 'HGNC:%s' % row[2]], [])
             network.add_node(gene)
 
 with io.open('../data/UniprotKB/graph.json', 'w', encoding='utf-8', newline='') as f:

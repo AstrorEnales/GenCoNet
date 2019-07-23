@@ -54,12 +54,12 @@ for association in root.findall('association'):
         drug = Drug([drug_id], [from_name])
         network.add_node(drug)
         added_rxnorm_drugs.add(from_id)
-    disease_id = 'MESH:%s' % to_id
+    disease_id = 'MeSH:%s' % to_id
     if to_id not in added_mesh_diseases:
         disease = Disease([disease_id], [to_name])
         network.add_node(disease)
         added_mesh_diseases.add(to_id)
-    rel = {'source': 'MED-RT'}
+    rel = {'source': 'MEDRT'}
     if association_type == 'induces':
         network.add_edge(Edge(drug_id, disease_id, 'INDUCES', rel))
     elif association_type == 'CI_with':

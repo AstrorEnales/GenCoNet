@@ -55,7 +55,7 @@ with io.open(annotations_file, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     for row in reader:
         if not row[0][0].startswith('!') and row[12] == 'taxon:9606':
-            gene = Gene(['UniprotKB:%s' % row[1], 'HGNC:%s' % row[2]], [])
+            gene = Gene(['UniProtKB:%s' % row[1], 'HGNC:%s' % row[2]], [])
             network.add_node(gene)
             label = go_class_ns_lookup[row[4]].upper()
             if label == 'MOLECULAR_FUNCTION':
@@ -64,7 +64,7 @@ with io.open(annotations_file, 'r', encoding='utf-8', newline='') as f:
                 label = 'BELONGS_TO_' + label
             elif label == 'CELLULAR_COMPONENT':
                 label = 'IN_' + label
-            e = Edge('UniprotKB:%s' % row[1], row[4], label, {'source': 'GO,%s' % row[5]})
+            e = Edge('UniProtKB:%s' % row[1], row[4], label, {'source': 'GO,%s' % row[5]})
             network.add_edge(e)
 
 with io.open('../data/GO/graph.json', 'w', encoding='utf-8', newline='') as f:

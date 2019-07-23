@@ -12,9 +12,9 @@ def map_to_simple_id(s: str) -> str or None:
     if s.startswith('http://identifiers.org/omim/'):
         return 'OMIM:%s' % s.split('omim/')[1]
     if s.startswith('http://identifiers.org/snomedct/'):
-        return 'SnomedCT:%s' % s.split('snomedct/')[1]
+        return 'SnoMedCT:%s' % s.split('snomedct/')[1]
     if s.startswith('http://identifiers.org/mesh/'):
-        return 'MESH:%s' % s.split('mesh/')[1]
+        return 'MeSH:%s' % s.split('mesh/')[1]
     if s.startswith('http://purl.obolibrary.org/obo/DOID_'):
         return 'DO:%s' % s.split('DOID_')[1]
     if s.startswith('http://identifiers.org/meddra/'):
