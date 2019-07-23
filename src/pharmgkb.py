@@ -5,13 +5,14 @@ import io
 import sys
 import csv
 import zipfile
-from typing import List, Set
+from typing import List, Set, Tuple
 
 from model.gene import Gene
 from model.network import Network
 from model.drug import Drug
 from model.disease import Disease
 from model.edge import Edge
+from model.variant import Variant
 
 maxInt = sys.maxsize
 while True:
@@ -19,7 +20,13 @@ while True:
         csv.field_size_limit(maxInt)
         break
     except OverflowError:
-        maxInt = int(maxInt/10)
+        maxInt = int(maxInt / 10)
+
+
+def split_list(value: str) -> List[str]:
+    if value is None or len(value) <= 0:
+        return []
+    return value.replace('","', ';').replace(',"', ';').strip('"').split(';')
 
 
 def process_drug_cross_references(ids: List[str]) -> Set[str]:
@@ -58,6 +65,56 @@ def process_drug_cross_references(ids: List[str]) -> Set[str]:
     return filtered_ids
 
 
+def process_gene_cross_references(ids: List[str]) -> Set[str]:
+    # TODO consider more ids:
+    # ALFRED:LO000002C
+    # Comparative Toxicogenomics Database:10017
+    # GenAtlas:A1BG
+    # GenBank:AY545216.1
+    # GO:GO:0000082
+    # HumanCyc Gene:HS00051
+    # IUPHAR Receptor:114
+    # ModBase:A0A183
+    # MutDB:A1BG
+    # NCBI Gene:100009601
+    # RefSeq DNA:NG_000007
+    # RefSeq Protein:BAE09150
+    # RefSeq RNA:NM_000016
+    # UCSC Genome Browser:NM_000014
+
+    # Not used:
+    # URL:http://www.imm.ki.se/CYPalleles/cyp3a4.htm
+
+    # Used ids:
+    # Ensembl:ENSG00000000460
+    # GeneCard:A1BG
+    # HGNC:10013
+    # OMIM:100640
+    # UniProtKB:A0AV47
+    filtered_ids = set()
+    for gene_id in ids:
+        if any([gene_id.startswith(x) for x in ['HGNC:', 'Ensembl:', 'OMIM:', 'GeneCard:', 'UniProtKB:']]):
+            filtered_ids.add(gene_id)
+    return filtered_ids
+
+
+def process_disease_external_vocabulary(ids: List[str]) -> Set[Tuple[str, str]]:
+    # Used ids:
+    # MedDRA:10000247(Abrasion of teeth)
+    # MeSH:C536109(N-acetyl glutamate synthetase deficiency)
+    # NDFRT:N0000000263(Abetalipoproteinemia [Disease/Finding])
+    # SnoMedCT:109769000(Necrotizing sialometaplasia)
+    # UMLS:C0001349(Acute-Phase Reaction [Disease/Finding]) or UMLS:C0001261(C0001261)
+    filtered_ids = set()
+    for disease_id in ids:
+        if any([disease_id.startswith(x) for x in ['MedDRA:', 'MeSH:', 'NDFRT:', 'SnoMedCT:', 'UMLS:']]):
+            index = disease_id.index('(')
+            _id = disease_id[0:index]
+            name = disease_id[index + 1:-1]
+            filtered_ids.add((_id, None if name == _id.split(':')[1] else name))
+    return filtered_ids
+
+
 network = Network()
 for name in ['genes', 'variants', 'drugs', 'phenotypes']:
     with zipfile.ZipFile('../data/PharmGKB/%s.zip' % name) as z:
@@ -71,17 +128,13 @@ with io.open('../data/PharmGKB/drugs.tsv', 'r', encoding='utf-8', newline='') as
         # Only parse drugs and not drug classes for now
         if row[5] == 'Drug':
             drug_ids = {'PharmGKB:%s' % row[0]}
-            if row[6] is not None and len(row[6]) > 0:
-                drug_ids.update(process_drug_cross_references(row[6].split('","')))
-            if row[21] is not None and len(row[21]) > 0:
-                for rx_norm_id in row[21].split('","'):
-                    drug_ids.add('RxNorm:%s' % rx_norm_id)
-            if row[22] is not None and len(row[22]) > 0:
-                for atc_code in row[22].split('","'):
-                    drug_ids.add('AtcCode:%s' % atc_code)
-            if row[23] is not None and len(row[23]) > 0:
-                for compound_id in row[23].split('","'):
-                    drug_ids.add('PubChem:CID%s' % compound_id)
+            drug_ids.update(process_drug_cross_references(split_list(row[6])))
+            for rx_norm_id in split_list(row[21]):
+                drug_ids.add('RxNorm:%s' % rx_norm_id)
+            for atc_code in split_list(row[22]):
+                drug_ids.add('AtcCode:%s' % atc_code)
+            for compound_id in split_list(row[23]):
+                drug_ids.add('PubChem:CID%s' % compound_id)
             drug = Drug(drug_ids, [row[1]])
             network.add_node(drug)
 
@@ -90,10 +143,38 @@ with io.open('../data/PharmGKB/genes.tsv', 'r', encoding='utf-8', newline='') as
     next(reader, None)
     for row in reader:
         gene_ids = {'PharmGKB:%s' % row[0]}
+        if row[2] is not None and len(row[2]) > 0:
+            gene_ids.add('HGNC:%s' % row[2])
+        for ensembl_id in split_list(row[3]):
+            gene_ids.add('Ensembl:%s' % ensembl_id)
+        if row[5] is not None and len(row[5]) > 0:
+            gene_ids.add('HGNC:%s' % row[5])
+        gene_ids.update(process_gene_cross_references(split_list(row[10])))
         gene = Gene(gene_ids, [row[4]])
-        # TODO
         network.add_node(gene)
-        pass
+
+with io.open('../data/PharmGKB/variants.tsv', 'r', encoding='utf-8', newline='') as f:
+    reader = csv.reader(f, delimiter='\t', quotechar='"')
+    next(reader, None)
+    for row in reader:
+        variant_ids = {'PharmGKB:%s' % row[0]}
+        if row[1] is not None and len(row[1]) > 0:
+            variant_ids.add('dbSNP:%s' % row[1])
+        variant = Variant(variant_ids, [])
+        network.add_node(variant)
+
+with io.open('../data/PharmGKB/phenotypes.tsv', 'r', encoding='utf-8', newline='') as f:
+    reader = csv.reader(f, delimiter='\t', quotechar='"')
+    next(reader, None)
+    for row in reader:
+        disease_ids = {'PharmGKB:%s' % row[0]}
+        disease_names = {row[1]}
+        for id_name_pair in process_disease_external_vocabulary(split_list(row[4])):
+            disease_ids.add(id_name_pair[0])
+            if id_name_pair[1] is not None:
+                disease_names.add(id_name_pair[1])
+        disease = Disease(disease_ids, disease_names)
+        network.add_node(disease)
 
 with io.open('../data/PharmGKB/graph.json', 'w', encoding='utf-8', newline='') as f:
     f.write(json.dumps(network.to_dict(), indent=2))
