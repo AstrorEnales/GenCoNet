@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/AstrorEnales/GenCoNet.svg?branch=master)](https://travis-ci.org/AstrorEnales/GenCoNet)
+
 # GenCoNet
 Under development
 
