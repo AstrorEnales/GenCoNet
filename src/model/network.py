@@ -50,12 +50,12 @@ class Network:
         if edge.label not in self.edge_lookup:
             self.edge_lookup[edge.label] = {}
         self.edge_lookup[edge.label][edge.id] = edge
-        if edge.source not in self.edge_source_lookup:
-            self.edge_source_lookup[edge.source] = {}
-        self.edge_source_lookup[edge.source][edge.id] = edge
-        if edge.target not in self.edge_target_lookup:
-            self.edge_target_lookup[edge.target] = {}
-        self.edge_target_lookup[edge.target][edge.id] = edge
+        if edge.source_node_id not in self.edge_source_lookup:
+            self.edge_source_lookup[edge.source_node_id] = {}
+        self.edge_source_lookup[edge.source_node_id][edge.id] = edge
+        if edge.target_node_id not in self.edge_target_lookup:
+            self.edge_target_lookup[edge.target_node_id] = {}
+        self.edge_target_lookup[edge.target_node_id][edge.id] = edge
 
     def get_edges_by_label(self, label: str) -> List[Edge]:
         return list(self.edge_lookup[label].values()) if label in self.edge_lookup else []
@@ -76,7 +76,7 @@ class Network:
             for _id in node_from.ids:
                 if _id in self.edge_source_lookup:
                     result.extend([e for e in self.edge_source_lookup[_id].values()
-                                   if e.label == label and e.target in node_to.ids])
+                                   if e.label == label and e.target_node_id in node_to.ids])
         return result
 
     def delete_node(self, node: Node):
@@ -98,8 +98,8 @@ class Network:
     def delete_edge(self, edge: Edge):
         del self.edges[edge.id]
         del self.edge_lookup[edge.label][edge.id]
-        del self.edge_source_lookup[edge.source][edge.id]
-        del self.edge_target_lookup[edge.target][edge.id]
+        del self.edge_source_lookup[edge.source_node_id][edge.id]
+        del self.edge_target_lookup[edge.target_node_id][edge.id]
 
     def prune(self):
         '''
@@ -124,7 +124,7 @@ class Network:
             edges = list(self.edge_lookup[label].values())
             edge_source_target_lookup = {}
             for edge in edges:
-                key = self.nodes[edge.source].id + '$' + self.nodes[edge.target].id
+                key = self.nodes[edge.source_node_id].id + '$' + self.nodes[edge.target_node_id].id
                 if key not in edge_source_target_lookup:
                     edge_source_target_lookup[key] = []
                 edge_source_target_lookup[key].append(edge)
@@ -153,7 +153,7 @@ class Network:
             n = {'ids': sorted(node.ids), 'names': sorted(node.names), '_id': node.id, '_label': node.label}
             result['nodes'].append(n)
         for edge in self.edges.values():
-            e = {'_label': edge.label, '_source': edge.source, '_target': edge.target}
+            e = {'_label': edge.label, '_source': edge.source_node_id, '_target': edge.target_node_id}
             for key in edge.attributes:
                 e[key] = edge.attributes[key]
             result['edges'].append(e)

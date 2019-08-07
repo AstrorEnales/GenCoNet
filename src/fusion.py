@@ -85,7 +85,7 @@ def save_network(network: Network, config):
                     else:
                         values.append(e.attributes[l] if l in e.attributes else None)
                 writer.writerow(
-                    [network.get_node_by_id(e.source).id] + values + [network.get_node_by_id(e.target).id, e.label])
+                    [network.get_node_by_id(e.source_node_id).id] + values + [network.get_node_by_id(e.target_node_id).id, e.label])
 
     with io.open(os.path.join(output_path, 'create_indices.cypher'), 'w', encoding='utf-8', newline='') as f:
         for node_label in network.node_labels():
