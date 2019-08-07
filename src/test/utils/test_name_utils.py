@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import unittest
 from utils import name_utils
 
@@ -30,7 +28,3 @@ class TestMethods(unittest.TestCase):
                                                        'ALLERGENIC EXTRACT, ASPERGILLUS NIGER'}))
         self.assertTrue(name_utils.node_names_synonym({'Sodium Phosphate, Monobasic',
                                                        'SODIUM PHOSPHATE,MONOBASIC'}))
-
-
-if __name__ == '__main__':
-    unittest.main()

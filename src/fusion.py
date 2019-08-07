@@ -4,30 +4,14 @@ import csv
 import io
 import os
 import json
-import shutil
 
 import mondo_mapper
 
 from utils import name_utils
+from utils import directory_utils
 
 from model.disease import Disease
 from model.network import Network
-
-
-def cleanup_output(output_path: str):
-    # Cleanup previous export
-    if os.path.exists(output_path) and os.path.isdir(output_path):
-        for f in os.listdir(output_path):
-            file_path = os.path.join(output_path, f)
-            try:
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print(e)
-    else:
-        os.mkdir(output_path)
 
 
 def merge_duplicate_node_names(network: Network):
@@ -164,7 +148,7 @@ if __name__ == '__main__':
     network.merge_duplicate_edges()
     # Export
     print('[INFO] Export network')
-    cleanup_output(config['output-path'])
+    directory_utils.create_clean_directory(config['output-path'])
     with io.open(os.path.join(config['output-path'], 'graph.json'), 'w', encoding='utf-8', newline='') as f:
         f.write(json.dumps(network.to_dict(), separators=(',', ':')))
     save_network(network, config)
