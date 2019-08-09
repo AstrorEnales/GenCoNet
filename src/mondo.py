@@ -39,16 +39,14 @@ reverse_lookup = {}
 with io.open(file, 'r', encoding='utf-8', newline='') as f:
     root = json.load(f)['graphs']
     for graph in root:
-        '''
-        nodes
-        edges
-        id
-        meta
-        equivalentNodesSets
-        logicalDefinitionAxioms
-        domainRangeAxioms
-        propertyChainAxioms
-        '''
+        # nodes
+        # edges
+        # id
+        # meta
+        # equivalentNodesSets
+        # logicalDefinitionAxioms
+        # domainRangeAxioms
+        # propertyChainAxioms
         if graph['id'] != 'http://purl.obolibrary.org/obo/mondo.owl':
             continue
         for node in graph['nodes']:

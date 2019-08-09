@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/AstrorEnales/GenCoNet.svg?branch=master)](https://travis-ci.org/AstrorEnales/GenCoNet)
+[![CodeFactor](https://www.codefactor.io/repository/github/astrorenales/genconet/badge)](https://www.codefactor.io/repository/github/astrorenales/genconet)
 
 # GenCoNet
 Under development

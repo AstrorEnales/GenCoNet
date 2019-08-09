@@ -37,7 +37,7 @@ if not os.path.exists(file_cis) or not os.path.exists(file_trans):
 
 
 def value_empty(s: str) -> bool:
-    return s is None or len(s.strip()) == 0 or s.strip() == '-'
+    return not s or s.strip() == '-'
 
 
 network = Network()

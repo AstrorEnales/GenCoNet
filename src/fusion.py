@@ -137,7 +137,7 @@ if __name__ == '__main__':
         all_disease_ids.update(node.ids)
     for disease_id in all_disease_ids:
         mapped_ids, mapped_names = mondo_mapper.map_from(disease_id)
-        if len(mapped_ids) > 0:
+        if mapped_ids:
             network.add_node(Disease(mapped_ids, mapped_names))
     # Cleanup
     print('[INFO] Prune network')
@@ -152,12 +152,3 @@ if __name__ == '__main__':
     with io.open(os.path.join(config['output-path'], 'graph.json'), 'w', encoding='utf-8', newline='') as f:
         f.write(json.dumps(network.to_dict(), separators=(',', ':')))
     save_network(network, config)
-
-'''
-MATCH p=(disease2:Disease)-[*1..2]-(:Gene)-[:TARGETS]-(drug:Drug)-[:INDICATES]-(disease1:Disease)
-    WHERE disease1<>disease2
-    AND ANY(name IN disease1.names WHERE toLower(name) =~ ".*hypertension.*")
-    AND ANY(name IN disease2.names WHERE toLower(name) =~ ".*asthma.*")
-    RETURN drug._id, drug.names[0], disease1.names[0], collect(distinct disease2.names[0])
-    LIMIT 100
-'''

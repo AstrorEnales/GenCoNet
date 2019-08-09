@@ -23,7 +23,7 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
     next(reader, None)
     for row in reader:
         gene_ids = ['HGNC:%s' % row[1]]
-        if row[0] is not None and len(row[0]) > 0:
+        if row[0]:
             gene_ids.append(row[0])
         network.add_node(Gene(gene_ids, [row[2]]))
 

@@ -57,8 +57,8 @@ def node_names_synonym(names: Set[str]) -> bool:
                         changes[0][1] == '- f' and changes[1][1] == '+ p' and changes[2][1] == '+ h':
                     continue
             # Check for different word order
-            a_parts = sorted([x for x in re.split(r'[, ()]', a) if len(x) > 0])
-            b_parts = sorted([x for x in re.split(r'[, ()]', b) if len(x) > 0])
+            a_parts = sorted([x for x in re.split(r'[, ()]', a) if x])
+            b_parts = sorted([x for x in re.split(r'[, ()]', b) if x])
             if ' '.join(a_parts) == ' '.join(b_parts):
                 continue
             valid = False

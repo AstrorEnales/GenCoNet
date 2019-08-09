@@ -14,7 +14,7 @@ with io.open('../data/DrugCentral/drugcentral_mappings.csv', 'r', encoding='utf-
     next(reader, None)
     for row in reader:
         ids = ['DrugCentral:%s' % row[0], 'DrugBank:%s' % row[1]]
-        if row[2] is not None and len(row[2]) > 0:
+        if row[2]:
             ids.append('RxNorm:%s' % row[2])
         network.add_node(Drug(ids, [row[3]]))
 

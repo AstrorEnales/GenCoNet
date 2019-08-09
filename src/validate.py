@@ -13,7 +13,7 @@ def node_ids_to_links(node_ids):
     result = ''
     for node_id in node_ids:
         prefix, suffix = node_id.split(':')
-        result += (', ' if len(result) > 0 else '')
+        result += (', ' if result else '')
         if prefix == 'DrugBank':
             result += '<a href="https://www.drugbank.ca/%s" target="_blank">%s</a>' % (suffix, node_id)
         elif prefix == 'DrugCentral':

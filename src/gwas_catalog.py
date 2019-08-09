@@ -60,7 +60,7 @@ with io.open('../data/GWAS-Catalog/gwas_catalog_associations.tsv', 'r', encoding
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     for row in reader:
-        if row[14] is None or len(row[14]) == 0:
+        if not row[14]:
             continue
         gene_ids = row[14].replace(' x ', ', ').replace(' - ', ', ').split(', ')
         print(row[14])

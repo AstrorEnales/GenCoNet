@@ -143,11 +143,11 @@ with io.open('../data/PharmGKB/genes.tsv', 'r', encoding='utf-8', newline='') as
     next(reader, None)
     for row in reader:
         gene_ids = {'PharmGKB:%s' % row[0]}
-        if row[2] is not None and len(row[2]) > 0:
+        if row[2]:
             gene_ids.add('HGNC:%s' % row[2])
         for ensembl_id in split_list(row[3]):
             gene_ids.add('Ensembl:%s' % ensembl_id)
-        if row[5] is not None and len(row[5]) > 0:
+        if row[5]:
             gene_ids.add('HGNC:%s' % row[5])
         gene_ids.update(process_gene_cross_references(split_list(row[10])))
         gene = Gene(gene_ids, [row[4]])
@@ -158,7 +158,7 @@ with io.open('../data/PharmGKB/variants.tsv', 'r', encoding='utf-8', newline='')
     next(reader, None)
     for row in reader:
         variant_ids = {'PharmGKB:%s' % row[0]}
-        if row[1] is not None and len(row[1]) > 0:
+        if row[1]:
             variant_ids.add('dbSNP:%s' % row[1])
         variant = Variant(variant_ids, [])
         network.add_node(variant)

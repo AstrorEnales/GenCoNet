@@ -15,7 +15,7 @@ with io.open('../data/OMIM/genemap2.txt', 'r', encoding='utf-8', newline='') as 
     for row in reader:
         if row[0].startswith('#'):
             continue
-        if row[8] is not None and len(row[8]) > 0 and row[12] is not None and len(row[12]) > 0:
+        if row[8] and row[12]:
             phenotypes = [x.strip() for x in row[12].split(';')]
             for phenotype in phenotypes:
                 last_left_brace = phenotype.rfind('(')

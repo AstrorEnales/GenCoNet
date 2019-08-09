@@ -14,9 +14,9 @@ from model.edge import Edge
 
 def get_drugbank_id(drug_node, ns):
     ids = drug_node.findall(ns + 'drugbank-id')
-    if len(ids) > 0:
+    if ids:
         primary_ids = [x for x in ids if 'primary' in x.attrib and x.attrib['primary'] == 'true']
-        return primary_ids[0].text if len(primary_ids) > 0 else ids[0].text
+        return primary_ids[0].text if primary_ids else ids[0].text
     return None
 
 
@@ -175,7 +175,7 @@ else:
 
 external_id_lookup = {}
 for row in external_id_results:
-    external_id_lookup[row[0]] = [x for x in row[1::] if x is not None and len(x) > 0]
+    external_id_lookup[row[0]] = [x for x in row[1::] if x]
 
 network = Network()
 for row in targets_results:
@@ -185,14 +185,14 @@ for row in targets_results:
     drug = Drug(drug_ids, [row[1]])
     network.add_node(drug)
     gene_ids = ['HGNC:%s' % row[2]]
-    if row[4] is not None and len(row[4]) > 0:
+    if row[4]:
         gene_ids.append(row[4])
     gene = Gene(gene_ids, [row[3]])
     network.add_node(gene)
     rel = {
         'source': 'DrugBank',
         'known_action': row[5] == 1,
-        'actions': row[6].split(',') if row[6] is not None and len(row[6]) > 0 else [],
+        'actions': row[6].split(',') if row[6] else [],
         'simplified_action': row[7]
     }
     network.add_edge(Edge(next(iter(drug.ids)), next(iter(gene.ids)), 'TARGETS', rel))

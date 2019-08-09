@@ -41,18 +41,16 @@ with io.open(drug_file, 'r', encoding='utf-8', newline='') as f:
     for row in reader:
         drug_lookup[row[0].strip()] = row[1].strip()
 
-'''
-1: STITCH compound id (flat, see above)
-2: UMLS concept id as it was found on the label
-3: method of detection: NLP_indication / NLP_precondition / text_mention
-4: concept name
-5: MedDRA concept type (LLT = lowest level term, PT = preferred term; in a few cases the term is neither LLT nor PT)
-6: UMLS concept id for MedDRA term
-7: MedDRA concept name
+# 1: STITCH compound id (flat, see above)
+# 2: UMLS concept id as it was found on the label
+# 3: method of detection: NLP_indication / NLP_precondition / text_mention
+# 4: concept name
+# 5: MedDRA concept type (LLT = lowest level term, PT = preferred term; in a few cases the term is neither LLT nor PT)
+# 6: UMLS concept id for MedDRA term
+# 7: MedDRA concept name
 
-All side effects found on the labels are given as LLT. Additionally, the PT is shown. There is at least one
-PT for every LLT, but sometimes the PT is the same as the LLT.
-'''
+# All side effects found on the labels are given as LLT. Additionally, the PT is shown. There is at least one
+# PT for every LLT, but sometimes the PT is the same as the LLT.
 with io.open(file, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     for row in reader:

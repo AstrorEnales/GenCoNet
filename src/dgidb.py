@@ -25,25 +25,21 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
     next(reader, None)
     for row in reader:
         row = [x.strip() for x in row]
-        if row[0] is None or len(row[0]) == 0:
-            continue
-        if row[7] is None or len(row[7]) == 0:
-            continue
-        if row[8] is None or len(row[8]) == 0:
+        if not row[0] or not row[7] or not row[8]:
             continue
         gene_ids = {'HGNC:%s' % row[0]}
-        if row[2] is not None and len(row[2]) > 0:
+        if row[2]:
             gene_ids.add('Entrez:%s' % row[2])
         gene = Gene(gene_ids, [])
         network.add_node(gene)
         drug_name = row[7].replace('(%s)' % row[8], '').replace(row[8], '').strip()
-        drug = Drug(['ChEMBL:%s' % row[8]], [drug_name] if len(drug_name) > 0 else [])
+        drug = Drug(['ChEMBL:%s' % row[8]], [drug_name] if drug_name else [])
         network.add_node(drug)
         rel = {
             'source': 'DGIdb,%s' % row[3],
             'actions': [row[4]],
         }
-        if row[9] is not None and len(row[9]) > 0:
+        if row[9]:
             pubmed_ids = ','.join(['PMID:%s' % x for x in row[9].strip().split(',')])
             rel['source'] += ',%s' % pubmed_ids
         network.add_edge(Edge(next(iter(drug.ids)), next(iter(gene.ids)), 'TARGETS', rel))
