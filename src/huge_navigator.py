@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
-import json
 import io
+import os
+import json
+import urllib.request
+import urllib.parse
 
 from model.edge import Edge
 from model.network import Network
@@ -9,6 +12,13 @@ from model.gene import Gene
 from model.disease import Disease
 
 file = '../data/HuGE-Navigator/Disease-GeneID.txt'
+url = 'https://phgkb.cdc.gov/PHGKB/fileDownload.action'
+if not os.path.exists(file):
+    print('Database does not exist. Trying to download...')
+    data = urllib.parse.urlencode({'downLoadType': 'all_pheno', 'Mysubmit': 'Download'}).encode()
+    with urllib.request.urlopen(urllib.request.Request(url, data=data)) as response:
+        with open(file, 'wb') as f:
+            f.write(response.read())
 
 network = Network()
 
