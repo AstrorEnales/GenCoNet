@@ -3,6 +3,7 @@
 import re
 import io
 import csv
+import cgi
 import json
 import os.path
 import urllib.request
@@ -11,13 +12,18 @@ from model.variant import Variant
 from model.gene import Gene
 from model.edge import Edge
 
-file = '../data/GWAS-Catalog/gwas_catalog_associations.tsv'
+file = '../data/GWAS-Catalog/'  # gwas_catalog_v1.0-associations_e96_r2019-11-21.tsv
 url = 'https://www.ebi.ac.uk/gwas/api/search/downloads/full'
+# First extract the filename
+with urllib.request.urlopen(url) as response:
+    _, params = cgi.parse_header(response.headers.get('Content-Disposition', ''))
+    file = file + params['filename']
 
 if not os.path.exists(file):
     print('Database does not exist. Trying to download...')
-    with urllib.request.urlopen(url) as response, open(file, 'wb') as f:
-        f.write(response.read())
+    with urllib.request.urlopen(url) as response:
+        with open(file, 'wb') as f:
+            f.write(response.read())
 
 network = Network()
 
@@ -56,7 +62,7 @@ network = Network()
 # 32 PLATFORM [SNPS PASSING QC]
 # 33 CNV
 loc_pattern = re.compile(r'LOC[0-9]+')
-with io.open('../data/GWAS-Catalog/gwas_catalog_associations.tsv', 'r', encoding='utf-8', newline='') as f:
+with io.open(file, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     for row in reader:
