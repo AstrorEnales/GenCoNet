@@ -14,10 +14,10 @@ from model.edge import Edge
 
 gene_file = '../data/DisGeNet/curated_gene_disease_associations.tsv'
 gene_zip_file = '../data/DisGeNet/curated_gene_disease_associations.tsv.gz'
-gene_url = 'http://www.disgenet.org/ds/DisGeNET/results/curated_gene_disease_associations.tsv.gz'
+gene_url = 'https://www.disgenet.org/static/disgenet_ap1/files/downloads/curated_gene_disease_associations.tsv.gz'
 variant_file = '../data/DisGeNet/curated_variant_disease_associations.tsv'
 variant_zip_file = '../data/DisGeNet/curated_variant_disease_associations.tsv.gz'
-variant_url = 'http://www.disgenet.org/ds/DisGeNET/results/curated_variant_disease_associations.tsv.gz'
+variant_url = 'https://www.disgenet.org/static/disgenet_ap1/files/downloads/curated_variant_disease_associations.tsv.gz'
 
 for url, file, zip_file in [(gene_url, gene_file, gene_zip_file), (variant_url, variant_file, variant_zip_file)]:
     if not os.path.exists(file):
@@ -38,24 +38,32 @@ with io.open('../data/DisGeNet/curated_gene_disease_associations.tsv', 'r', enco
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     for row in reader:
-        # geneId
-        # geneSymbol
-        # diseaseId
-        # diseaseName
-        # score
-        # NofPmids
-        # NofSnps
-        # source
-        if int(row[5]) >= PUBMED_COUNT_THRESHOLD:
+        #  0 - geneId
+        #  1 - geneSymbol
+        #  2 - DSI
+        #  3 - DPI
+        #  4 - diseaseId
+        #  5 - diseaseName
+        #  6 - diseaseType
+        #  7 - diseaseClass
+        #  8 - diseaseSemanticType
+        #  9 - score
+        # 10 - EI
+        # 11 - YearInitial
+        # 12 - YearFinal
+        # 13 - NofPmids
+        # 14 - NofSnps
+        # 15 - source
+        if int(row[13]) >= PUBMED_COUNT_THRESHOLD:
             gene = Gene(['HGNC:%s' % row[1]], [])
             network.add_node(gene)
-            disease = Disease(['UMLS:%s' % row[2]], [row[3]])
+            disease = Disease(['UMLS:%s' % row[4]], [row[5]])
             network.add_node(disease)
             rel = {
-                'source': 'DisGeNet,%s' % row[7],
-                'num_pmids': int(row[5]),
-                'num_snps': int(row[6]),
-                'score': row[4]
+                'source': 'DisGeNet,%s' % row[15],
+                'num_pmids': int(row[13]),
+                'num_snps': int(row[14]),
+                'score': row[9]
             }
             network.add_edge(Edge(next(iter(gene.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))
 
@@ -63,21 +71,38 @@ with io.open('../data/DisGeNet/curated_variant_disease_associations.tsv', 'r', e
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     for row in reader:
-        # snpId
-        # diseaseId
-        # diseaseName
-        # score
-        # NofPmids
-        # source
-        if int(row[4]) >= PUBMED_COUNT_THRESHOLD:
+        # 0 snpId
+        # 1 diseaseId
+        # 2 diseaseName
+        # 3 score
+        # 4 NofPmids
+        # 5 source
+
+        #  0 - snpId
+        #  1 - chromosome
+        #  2 - position
+        #  3 - DSI
+        #  4 - DPI
+        #  5 - diseaseId
+        #  6 - diseaseName
+        #  7 - diseaseType
+        #  8 - diseaseClass
+        #  9 - diseaseSemanticType
+        # 10 - score
+        # 11 - EI
+        # 12 - YearInitial
+        # 13 - YearFinal
+        # 14 - NofPmids
+        # 15 - source
+        if int(row[14]) >= PUBMED_COUNT_THRESHOLD:
             variant = Variant(['dbSNP:%s' % row[0]], [])
             network.add_node(variant)
-            disease = Disease(['UMLS:%s' % row[1]], [row[2]])
+            disease = Disease(['UMLS:%s' % row[5]], [row[6]])
             network.add_node(disease)
             rel = {
-                'source': 'DisGeNet,%s' % row[5],
-                'num_pmids': int(row[4]),
-                'score': row[3]
+                'source': 'DisGeNet,%s' % row[15],
+                'num_pmids': int(row[14]),
+                'score': row[10]
             }
             network.add_edge(Edge(next(iter(variant.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))
 
