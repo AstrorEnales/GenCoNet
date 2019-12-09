@@ -37,6 +37,7 @@ if not os.path.exists(ontology_file):
 
 network = Network()
 
+go_class_redirects = {}
 go_class_ns_lookup = {}
 owl_ns = '{http://www.w3.org/2002/07/owl#}'
 obo_in_owl_ns = '{http://www.geneontology.org/formats/oboInOwl#}'
@@ -50,6 +51,8 @@ for owl_class in root.findall(owl_ns + 'Class'):
         go_class = GOClass([id_node.text], [label_node.text])
         network.add_node(go_class)
         go_class_ns_lookup[id_node.text] = obo_ns_node.text
+        for alternative_id_node in owl_class.findall(obo_in_owl_ns + 'hasAlternativeId'):
+            go_class_redirects[alternative_id_node.text] = id_node.text
 
 with io.open(annotations_file, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
@@ -57,6 +60,9 @@ with io.open(annotations_file, 'r', encoding='utf-8', newline='') as f:
         if not row[0][0].startswith('!') and row[12] == 'taxon:9606':
             gene = Gene(['UniProtKB:%s' % row[1], 'HGNC:%s' % row[2]], [])
             network.add_node(gene)
+            if row[4] not in go_class_ns_lookup:
+                # print('[WARN] GO id %s is obsolete, redirecting to %s' % (row[4], go_class_redirects[row[4]]))
+                row[4] = go_class_redirects[row[4]]
             label = go_class_ns_lookup[row[4]].upper()
             if label == 'MOLECULAR_FUNCTION':
                 label = 'HAS_' + label
