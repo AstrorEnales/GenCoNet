@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-import json
+import os
 import io
 import sys
 import csv
+import json
 import zipfile
+import urllib.request
 from typing import List, Set, Tuple
 
 from model.gene import Gene
@@ -116,8 +118,19 @@ def process_disease_external_vocabulary(ids: List[str]) -> Set[Tuple[str, str]]:
 
 
 network = Network()
+request_headers = {
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) ' +
+                  'Chrome/35.0.1916.47 Safari/537.36'
+}
 for name in ['genes', 'variants', 'drugs', 'phenotypes']:
-    with zipfile.ZipFile('../data/PharmGKB/%s.zip' % name) as z:
+    url = 'https://s3.pgkb.org/data/%s.zip' % name
+    zip_file = '../data/PharmGKB/%s.zip' % name
+    if not os.path.exists(zip_file):
+        print('Downloading latest archive for %s...' % name)
+        request = urllib.request.Request(url, headers=request_headers)
+        with urllib.request.urlopen(request) as response, open(zip_file, 'wb') as f:
+            f.write(response.read())
+    with zipfile.ZipFile(zip_file) as z:
         with open('../data/PharmGKB/%s.tsv' % name, 'wb') as f:
             f.write(z.read('%s.tsv' % name))
 
