@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import os.path
 import urllib.request
 import io
@@ -32,5 +31,4 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
         hpo_term_name = row[4]
         # TODO
 
-with io.open('../data/HPO/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/HPO/graph.json')

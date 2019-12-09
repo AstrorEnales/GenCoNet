@@ -4,7 +4,6 @@ import re
 import io
 import csv
 import cgi
-import json
 import os.path
 import urllib.request
 from model.network import Network
@@ -81,5 +80,4 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
                 network.add_node(variant)
                 network.add_edge(Edge(gene.id, variant.id, 'CODES', {'source': 'GWASCatalog', 'pmid': row[1]}))
 
-with io.open('../data/GWAS-Catalog/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/GWAS-Catalog/graph.json')

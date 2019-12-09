@@ -1,3 +1,5 @@
+import io
+import json
 from model.disease import Disease
 from model.drug import Drug
 from model.gene import Gene
@@ -177,3 +179,10 @@ class Network:
             del params['_target']
             del params['_label']
             self.add_edge(Edge(edge['_source'], edge['_target'], edge['_label'], params))
+
+    def save(self, file_path: str, indent: bool = False):
+        with io.open(file_path, 'w', encoding='utf-8', newline='') as f:
+            if indent:
+                f.write(json.dumps(self.to_dict(), indent=2))
+            else:
+                f.write(json.dumps(self.to_dict()))

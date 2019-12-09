@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import io
 import csv
 from model.network import Network
@@ -20,5 +19,4 @@ with io.open('../data/PubMed/drug_disease.csv', 'r', encoding='utf-8', newline='
         network.add_node(disease)
         network.add_edge(Edge(drug.id, row[4], row[2], {'source': 'PubMed', 'pmid': row[5]}))
 
-with io.open('../data/PubMed/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/PubMed/graph.json')

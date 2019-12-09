@@ -4,7 +4,6 @@ import os
 import io
 import sys
 import csv
-import json
 import zipfile
 import urllib.request
 from typing import List, Set, Tuple
@@ -13,7 +12,6 @@ from model.gene import Gene
 from model.network import Network
 from model.drug import Drug
 from model.disease import Disease
-from model.edge import Edge
 from model.variant import Variant
 
 maxInt = sys.maxsize
@@ -189,5 +187,4 @@ with io.open('../data/PharmGKB/phenotypes.tsv', 'r', encoding='utf-8', newline='
         disease = Disease(disease_ids, disease_names)
         network.add_node(disease)
 
-with io.open('../data/PharmGKB/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/PharmGKB/graph.json')

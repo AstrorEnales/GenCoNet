@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-import json
-import os.path
 import io
 import csv
-import urllib.request
+import os.path
 import zipfile
+import urllib.request
 from model.network import Network
 from model.gene import Gene
 from model.variant import Variant
@@ -80,5 +79,4 @@ with io.open(file_trans, 'r', encoding='utf-8', newline='') as f:
             }
             network.add_edge(Edge(next(iter(gene.ids)), next(iter(variant.ids)), 'EQTL', rel))
 
-with io.open('../data/Westra_etal_2017/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/Westra_etal_2017/graph.json')

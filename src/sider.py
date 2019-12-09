@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import os.path
 import urllib.request
 import io
@@ -61,5 +60,4 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
         network.add_node(disease)
         network.add_edge(Edge(next(iter(drug.ids)), next(iter(disease.ids)), 'INDICATES', {'source': 'SIDER'}))
 
-with io.open('../data/SIDER/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/SIDER/graph.json')

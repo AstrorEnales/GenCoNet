@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-import json
 import os.path
 import xml.etree.ElementTree
-import io
 import urllib.request
 import zipfile
 import re
@@ -111,5 +109,4 @@ for concept_code in sorted(concept_defs.keys()):
         disease = Disease(disease_ids, disease_names)
         network.add_node(disease)
 
-with io.open('../data/NDF-RT/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/NDF-RT/graph.json')

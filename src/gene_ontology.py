@@ -5,7 +5,6 @@ import urllib.request
 import gzip
 import io
 import csv
-import json
 import xml.etree.ElementTree
 
 from model.edge import Edge
@@ -73,5 +72,4 @@ with io.open(annotations_file, 'r', encoding='utf-8', newline='') as f:
             e = Edge('UniProtKB:%s' % row[1], row[4], label, {'source': 'GO,%s' % row[5]})
             network.add_edge(e)
 
-with io.open('../data/GO/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/GO/graph.json')

@@ -2,7 +2,6 @@
 
 import io
 import csv
-import json
 import os.path
 import zipfile
 import lxml.etree as etree
@@ -210,5 +209,4 @@ for row in interactions_results:
     }
     network.add_edge(Edge(next(iter(drug1.ids)), next(iter(drug2.ids)), 'INTERACTS', rel))
 
-with io.open('../data/DrugBank/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/DrugBank/graph.json')

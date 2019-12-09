@@ -5,7 +5,6 @@ import urllib.request
 import gzip
 import io
 import csv
-import json
 from model.network import Network
 from model.gene import Gene
 
@@ -36,5 +35,4 @@ with io.open(id_mapping_file, 'r', encoding='utf-8', newline='') as f:
             gene = Gene(['UniProtKB:%s' % row[0], 'HGNC:%s' % row[2]], [])
             network.add_node(gene)
 
-with io.open('../data/UniprotKB/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/UniprotKB/graph.json')

@@ -2,7 +2,6 @@
 
 import io
 import os
-import json
 import urllib.request
 import urllib.parse
 
@@ -36,5 +35,4 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
                 rel = {'source': 'HuGE Navigator'}
                 network.add_edge(Edge(next(iter(gene.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))
 
-with io.open('../data/HuGE-Navigator/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/HuGE-Navigator/graph.json')

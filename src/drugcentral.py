@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import io
 import csv
 from model.network import Network
@@ -35,5 +34,4 @@ with io.open('../data/DrugCentral/drugcentral_contraindications.csv', 'r', encod
         e = Edge('DrugBank:%s' % row[0], 'SnoMedCT:%s' % row[2], 'CONTRAINDICATES', {'source': 'DrugCentral'})
         network.add_edge(e)
 
-with io.open('../data/DrugCentral/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/DrugCentral/graph.json')

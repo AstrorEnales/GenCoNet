@@ -2,7 +2,6 @@
 
 import os.path
 import urllib.request
-import json
 import io
 import csv
 from model.network import Network
@@ -27,5 +26,4 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
             gene_ids.append(row[0])
         network.add_node(Gene(gene_ids, [row[2]]))
 
-with io.open('../data/HGNC/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/HGNC/graph.json')

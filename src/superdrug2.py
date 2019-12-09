@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import json
 import os.path
 import urllib.request
 import io
@@ -60,5 +59,4 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
         if len(drug_ids) > 1:
             network.add_node(Drug(drug_ids, [row[1]]))
 
-with io.open('../data/SuperDrug2/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/SuperDrug2/graph.json')

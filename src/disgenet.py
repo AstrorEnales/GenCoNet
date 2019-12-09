@@ -5,7 +5,6 @@ import urllib.request
 import gzip
 import io
 import csv
-import json
 from model.network import Network
 from model.variant import Variant
 from model.disease import Disease
@@ -106,5 +105,4 @@ with io.open('../data/DisGeNet/curated_variant_disease_associations.tsv', 'r', e
             }
             network.add_edge(Edge(next(iter(variant.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))
 
-with io.open('../data/DisGeNet/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/DisGeNet/graph.json')

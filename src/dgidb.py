@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import json
-import os.path
-import urllib.request
 import io
 import csv
+import os.path
+import urllib.request
 from model.network import Network
 from model.drug import Drug
 from model.gene import Gene
@@ -44,5 +43,4 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
             rel['source'] += ',%s' % pubmed_ids
         network.add_edge(Edge(next(iter(drug.ids)), next(iter(gene.ids)), 'TARGETS', rel))
 
-with io.open('../data/DGIdb/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/DGIdb/graph.json')

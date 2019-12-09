@@ -2,7 +2,6 @@
 
 import io
 import csv
-import json
 from model.network import Network
 from model.gene import Gene
 from model.disease import Disease
@@ -79,5 +78,4 @@ with io.open('../data/OMIM/filtered_associations.csv', 'r', encoding='utf-8', ne
         }
         network.add_edge(Edge(next(iter(gene.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))
 
-with io.open('../data/OMIM/graph.json', 'w', encoding='utf-8', newline='') as f:
-    f.write(json.dumps(network.to_dict(), indent=2))
+network.save('../data/OMIM/graph.json')
