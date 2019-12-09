@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
+import io
+import csv
 import json
 import os.path
-import xml.etree.ElementTree
-import io
 import zipfile
-import csv
+import lxml.etree as etree
 from model.network import Network
 from model.drug import Drug
 from model.gene import Gene
@@ -38,16 +38,18 @@ targets_output_file = '../data/DrugBank/drugs_target_human_genes.csv'
 interactions_output_file = '../data/DrugBank/drug_interactions.csv'
 if not os.path.exists(targets_output_file) or not os.path.exists(interactions_output_file) \
         or not os.path.exists(identifiers_output_file):
-    positive = ['inducer', 'agonist', 'activator', 'partial agonist', 'stimulator', 'positive modulator',
-                'positive allosteric modulator']
-    negative = ['blocker', 'antagonist', 'antibody', 'weak inhibitor', 'suppressor', 'partial antagonist',
+    positive = {'inducer', 'agonist', 'activator', 'partial agonist', 'stimulator', 'positive modulator',
+                'positive allosteric modulator'}
+    negative = {'blocker', 'antagonist', 'antibody', 'weak inhibitor', 'suppressor', 'partial antagonist',
                 'negative modulator', 'inverse agonist', 'inhibitor', 'inactivator', 'antisense oligonucleotide',
-                'inhibitory allosteric modulator', 'inhibitory immune response']
+                'inhibitory allosteric modulator', 'inhibitory immune response'}
 
     drugs = {}
     ns = '{http://www.drugbank.ca}'
-    root = xml.etree.ElementTree.parse(file).getroot()
-    for drug_node in root.findall(ns + 'drug'):
+    for event, drug_node in etree.iterparse(file, events=('end',), tag=ns + 'drug'):
+        # Skip non high level drug nodes
+        if 'created' not in drug_node.attrib:
+            continue
         drugbank_id = get_drugbank_id(drug_node, ns)
         if drugbank_id is None:
             continue
@@ -56,7 +58,7 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
         external_ids = set()
         external_identifiers_node = drug_node.find(ns + 'external-identifiers')
         if external_identifiers_node is not None:
-            for external_identifier_node in external_identifiers_node.findall(ns + 'external-identifier'):
+            for external_identifier_node in external_identifiers_node:
                 # ChEMBL, Wikipedia, UniProtKB, PharmGKB, KEGG Drug, PubChem Compound
                 source = external_identifier_node.find(ns + 'resource').text.strip()
                 identifier = external_identifier_node.find(ns + 'identifier').text.strip()
@@ -70,7 +72,7 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
         targets = []
         targets_node = drug_node.find(ns + 'targets')
         if targets_node is not None:
-            for target_node in targets_node.findall(ns + 'target'):
+            for target_node in targets_node:
                 actions = set()
                 actions_node = target_node.find(ns + 'actions')
                 if actions_node is not None:
@@ -104,11 +106,12 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
         interactions = []
         interactions_node = drug_node.find(ns + 'drug-interactions')
         if interactions_node is not None:
-            for interaction_node in interactions_node.findall(ns + 'drug-interaction'):
+            for interaction_node in interactions_node:
                 id2 = interaction_node.find(ns + 'drugbank-id').text
                 description = interaction_node.find(ns + 'description').text
                 interactions.append([id2, description])
         drugs[drugbank_id] = [drug_name, targets, interactions, external_ids]
+        drug_node.clear()
 
     targets_results = []
     interactions_results = []
