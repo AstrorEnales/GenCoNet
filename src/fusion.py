@@ -4,6 +4,7 @@ import csv
 import io
 import os
 import json
+from typing import Dict
 
 import mondo_mapper
 
@@ -19,7 +20,7 @@ def merge_duplicate_node_names(network: Network):
         node.names = name_utils.normalize_node_names(node.names)
 
 
-def save_network(network: Network, config):
+def save_network(network: Network, config: Dict):
     output_path = config['output-path']
     # Save nodes
     with io.open(os.path.join(output_path, 'nodes.csv'), 'w', encoding='utf-8', newline='') as f:

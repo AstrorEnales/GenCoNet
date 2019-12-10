@@ -82,6 +82,9 @@ def process_gene_cross_references(ids: List[str]) -> Set[str]:
     # RefSeq RNA:NM_000016
     # UCSC Genome Browser:NM_000014
 
+    # Dangerous:
+    # OMIM:100640 <-- OMIM cross references can be diseases
+
     # Not used:
     # URL:http://www.imm.ki.se/CYPalleles/cyp3a4.htm
 
@@ -89,11 +92,10 @@ def process_gene_cross_references(ids: List[str]) -> Set[str]:
     # Ensembl:ENSG00000000460
     # GeneCard:A1BG
     # HGNC:10013
-    # OMIM:100640
     # UniProtKB:A0AV47
     filtered_ids = set()
     for gene_id in ids:
-        if any([gene_id.startswith(x) for x in ['HGNC:', 'Ensembl:', 'OMIM:', 'GeneCard:', 'UniProtKB:']]):
+        if any([gene_id.startswith(x) for x in ['HGNC:', 'Ensembl:', 'GeneCard:', 'UniProtKB:']]):
             filtered_ids.add(gene_id)
     return filtered_ids
 
@@ -152,6 +154,23 @@ with io.open('../data/PharmGKB/drugs.tsv', 'r', encoding='utf-8', newline='') as
 with io.open('../data/PharmGKB/genes.tsv', 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
+    #  0 - PharmGKB Accession Id
+    #  1 - NCBI Gene ID
+    #  2 - HGNC ID
+    #  3 - Ensembl Id
+    #  4 - Name
+    #  5 - Symbol
+    #  6 - Alternate Names
+    #  7 - Alternate Symbols
+    #  8 - Is VIP
+    #  9 - Has Variant Annotation
+    # 10 - Cross-references
+    # 11 - Has CPIC Dosing Guideline
+    # 12 - Chromosome
+    # 13 - Chromosomal Start - GRCh37.p13
+    # 14 - Chromosomal Stop - GRCh37.p13
+    # 15 - Chromosomal Start - GRCh38.p7
+    # 16 - Chromosomal Stop - GRCh38.p7
     for row in reader:
         gene_ids = {'PharmGKB:%s' % row[0]}
         if row[2]:

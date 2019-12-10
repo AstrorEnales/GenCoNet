@@ -21,7 +21,10 @@ class Network:
     def add_node(self, node: Node):
         matches = [self.nodes[x] for x in node.ids if x in self.nodes]
         if any([node.label != x.label for x in matches]):
-            print('[WARN] Label mismatch for id overlap:', node, [str(x) for x in matches])
+            for _id in node.ids:
+                if _id in self.nodes and self.nodes[_id].label != node.label:
+                    print('[WARN] Label mismatch "%s - %s" for id overlap "%s"' % (
+                        node.label, self.nodes[_id].label, _id))
         for match in matches:
             node.merge(match)
         for x in node.ids:
