@@ -1,12 +1,7 @@
 import io
 import json
-from model.disease import Disease
-from model.drug import Drug
-from model.gene import Gene
-from model.go_class import GOClass
 from model.node import Node
 from model.edge import Edge
-from model.variant import Variant
 from typing import List, Dict, Iterator
 
 
@@ -19,19 +14,17 @@ class Network:
         self.edge_target_lookup: Dict[str, Dict[int, Edge]] = {}
 
     def add_node(self, node: Node):
-        matches = [self.nodes[x] for x in node.ids if x in self.nodes]
-        if any([node.label != x.label for x in matches]):
-            for _id in node.ids:
-                if _id in self.nodes and self.nodes[_id].label != node.label:
-                    print('[WARN] Label mismatch "%s - %s" for id overlap "%s"' % (
-                        node.label, self.nodes[_id].label, _id))
+        label_ids = [self.get_node_label_id(node, _id) for _id in node.ids]
+        matches = [self.nodes[x] for x in label_ids if x in self.nodes]
         for match in matches:
             node.merge(match)
-        for x in node.ids:
+        label_ids = [self.get_node_label_id(node, _id) for _id in node.ids]
+        for x in label_ids:
             self.nodes[x] = node
 
-    def get_node_by_id(self, _id: str) -> Node:
-        return self.nodes[_id] if _id in self.nodes else None
+    def get_node_by_id(self, _id: str, label: str) -> Node:
+        label_id = '%s|%s' % (label, _id)
+        return self.nodes[label_id] if label_id in self.nodes else None
 
     def get_nodes(self) -> Iterator[Node]:
         for node in set(self.nodes.values()):
@@ -40,7 +33,7 @@ class Network:
     def get_nodes_by_label(self, label: str) -> List[Node]:
         result = set()
         for node in self.nodes.values():
-            if node.label == label:
+            if label in node.label.split(';'):
                 result.add(node)
         return list(result)
 
@@ -55,12 +48,12 @@ class Network:
         if edge.label not in self.edge_lookup:
             self.edge_lookup[edge.label] = {}
         self.edge_lookup[edge.label][edge.id] = edge
-        if edge.source_node_id not in self.edge_source_lookup:
-            self.edge_source_lookup[edge.source_node_id] = {}
-        self.edge_source_lookup[edge.source_node_id][edge.id] = edge
-        if edge.target_node_id not in self.edge_target_lookup:
-            self.edge_target_lookup[edge.target_node_id] = {}
-        self.edge_target_lookup[edge.target_node_id][edge.id] = edge
+        if edge.source_label_id not in self.edge_source_lookup:
+            self.edge_source_lookup[edge.source_label_id] = {}
+        self.edge_source_lookup[edge.source_label_id][edge.id] = edge
+        if edge.target_label_id not in self.edge_target_lookup:
+            self.edge_target_lookup[edge.target_label_id] = {}
+        self.edge_target_lookup[edge.target_label_id][edge.id] = edge
 
     def get_edges_by_label(self, label: str) -> List[Edge]:
         return list(self.edge_lookup[label].values()) if label in self.edge_lookup else []
@@ -87,6 +80,7 @@ class Network:
     def delete_node(self, node: Node):
         edges = []
         for _id in node.ids:
+            _id = self.get_node_label_id(node, _id)
             del self.nodes[_id]
             if _id in self.edge_source_lookup:
                 edges.extend(self.edge_source_lookup[_id].values())
@@ -100,11 +94,15 @@ class Network:
             if edge.id in self.edge_lookup[edge.label]:
                 del self.edge_lookup[edge.label][edge.id]
 
+    @staticmethod
+    def get_node_label_id(node: Node, _id: str or None = None) -> str:
+        return '%s|%s' % (node.label, _id if _id else node.id)
+
     def delete_edge(self, edge: Edge):
         del self.edges[edge.id]
         del self.edge_lookup[edge.label][edge.id]
-        del self.edge_source_lookup[edge.source_node_id][edge.id]
-        del self.edge_target_lookup[edge.target_node_id][edge.id]
+        del self.edge_source_lookup[edge.source_label_id][edge.id]
+        del self.edge_target_lookup[edge.target_label_id][edge.id]
 
     def prune(self):
         '''
@@ -121,7 +119,8 @@ class Network:
         '''
         # Remove singletons
         for node in set(self.nodes.values()):
-            if not any([_id in self.edge_source_lookup or _id in self.edge_target_lookup for _id in node.ids]):
+            label_ids = [self.get_node_label_id(node, _id) for _id in node.ids]
+            if not any([_id in self.edge_source_lookup or _id in self.edge_target_lookup for _id in label_ids]):
                 self.delete_node(node)
 
     def merge_duplicate_edges(self):
@@ -129,7 +128,8 @@ class Network:
             edges = list(self.edge_lookup[label].values())
             edge_source_target_lookup = {}
             for edge in edges:
-                key = self.nodes[edge.source_node_id].id + '$' + self.nodes[edge.target_node_id].id
+                key = '%s$%s' % (self.get_node_label_id(self.nodes[edge.source_label_id]),
+                                 self.get_node_label_id(self.nodes[edge.target_label_id]))
                 if key not in edge_source_target_lookup:
                     edge_source_target_lookup[key] = []
                 edge_source_target_lookup[key].append(edge)
@@ -151,37 +151,57 @@ class Network:
 
     def to_dict(self) -> {}:
         result = {
+            'node_types': {},
             'nodes': [],
             'edges': []
         }
         for node in set(self.nodes.values()):
-            n = {'ids': sorted(node.ids), 'names': sorted(node.names), '_id': node.id, '_label': node.label}
+            n = {
+                'ids': sorted(node.ids),
+                'names': sorted(node.names),
+                '_id': node.id,
+                '_label': node.label
+            }
+            if node.label not in result['node_types']:
+                result['node_types'][node.label] = node.__module__
             result['nodes'].append(n)
         for edge in self.edges.values():
-            e = {'_label': edge.label, '_source': edge.source_node_id, '_target': edge.target_node_id}
+            e = {
+                '_label': edge.label,
+                '_source_id': edge.source_node_id,
+                '_source_label': edge.source_node_label,
+                '_target_id': edge.target_node_id,
+                '_target_label': edge.target_node_label
+            }
             for key in edge.attributes:
                 e[key] = edge.attributes[key]
             result['edges'].append(e)
         return result
 
     def load_from_dict(self, source: {}):
+        py_class_map = {}
+        for label in source['node_types']:
+            module_name = source['node_types'][label]
+            module = __import__(module_name)
+            for package in module_name.split('.')[1:]:
+                module = getattr(module, package)
+            py_class_map[label] = getattr(module, label)
         for node in source['nodes']:
-            if node['_label'] == 'Drug':
-                self.add_node(Drug(node['ids'], node['names']))
-            elif node['_label'] == 'Gene':
-                self.add_node(Gene(node['ids'], node['names']))
-            elif node['_label'] == 'GOClass':
-                self.add_node(GOClass(node['ids'], node['names']))
-            elif node['_label'] == 'Variant':
-                self.add_node(Variant(node['ids'], node['names']))
-            elif node['_label'] == 'Disease':
-                self.add_node(Disease(node['ids'], node['names']))
+            if ';' not in node['_label']:
+                class_ = py_class_map[node['_label']]
+                self.add_node(class_(node['ids'], node['names']))
+            else:
+                print('[Err ] Failed to load node with multiple labels', node)
         for edge in source['edges']:
             params = dict(edge)
-            del params['_source']
-            del params['_target']
+            del params['_source_id']
+            del params['_source_label']
+            del params['_target_id']
+            del params['_target_label']
             del params['_label']
-            self.add_edge(Edge(edge['_source'], edge['_target'], edge['_label'], params))
+            source_node = self.get_node_by_id(edge['_source_id'], edge['_source_label'])
+            target_node = self.get_node_by_id(edge['_target_id'], edge['_target_label'])
+            self.add_edge(Edge(source_node, target_node, edge['_label'], params))
 
     def save(self, file_path: str, indent: bool = False):
         with io.open(file_path, 'w', encoding='utf-8', newline='') as f:

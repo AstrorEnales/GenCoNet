@@ -88,11 +88,11 @@ for concept_code in sorted(concept_defs.keys()):
             role_name = role_defs[role[0]]
             rel = {'source': 'NDFRT'}
             if role_name == 'induces {NDFRT}':
-                network.add_edge(Edge(next(iter(drug.ids)), 'NDFRT:%s' % role[1], 'INDUCES', rel))
+                network.add_edge(Edge(drug, ('NDFRT:%s' % role[1], 'Disease'), 'INDUCES', rel))
             elif role_name == 'CI_with {NDFRT}':
-                network.add_edge(Edge(next(iter(drug.ids)), 'NDFRT:%s' % role[1], 'CONTRAINDICATES', rel))
+                network.add_edge(Edge(drug, ('NDFRT:%s' % role[1], 'Disease'), 'CONTRAINDICATES', rel))
             elif role_name == 'may_treat {NDFRT}':
-                network.add_edge(Edge(next(iter(drug.ids)), 'NDFRT:%s' % role[1], 'INDICATES', rel))
+                network.add_edge(Edge(drug, ('NDFRT:%s' % role[1], 'Disease'), 'INDICATES', rel))
     elif concept['kind'] == kind_defs_rev['DISEASE_KIND']:
         disease_ids = ['NDFRT:%s' % concept['code']]
         disease_names = [concept['name']]

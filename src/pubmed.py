@@ -17,6 +17,6 @@ with io.open('../data/PubMed/drug_disease.csv', 'r', encoding='utf-8', newline='
         disease = Disease([row[4]], [row[3]])
         network.add_node(drug)
         network.add_node(disease)
-        network.add_edge(Edge(drug.id, row[4], row[2], {'source': 'PubMed', 'pmid': row[5]}))
+        network.add_edge(Edge(drug, disease, row[2], {'source': 'PubMed', 'pmid': row[5]}))
 
 network.save('../data/PubMed/graph.json')

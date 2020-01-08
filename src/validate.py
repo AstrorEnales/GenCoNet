@@ -57,7 +57,7 @@ if __name__ == '__main__':
                 drug_check_failed_count += 1
 
                 for intersection in indications.intersection(contraindications):
-                    disease = network.get_node_by_id(intersection)
+                    disease = network.get_node_by_id(intersection, 'Disease')
                     drug_text = '%s<br/>%s' % (node_ids_to_links(drug.ids), '<br/>'.join(drug.names))
                     indications_text = '<br/>'.join(['%s: %s -> %s' % (x.attributes['source'], node_ids_to_links([x.source_node_id]), node_ids_to_links([x.target_node_id])) for x in network.get_edges_from_to(drug, disease, 'INDICATES')])
                     contraindications_text = '<br/>'.join(['%s: %s -> %s' % (x.attributes['source'], node_ids_to_links([x.source_node_id]), node_ids_to_links([x.target_node_id])) for x in network.get_edges_from_to(drug, disease, 'CONTRAINDICATES')])

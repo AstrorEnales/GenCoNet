@@ -58,7 +58,7 @@ with io.open(file_cis, 'r', encoding='utf-8', newline='') as f:
                 'snp_chr': row[2],
                 'cis_trans': row[7]
             }
-            network.add_edge(Edge(next(iter(gene.ids)), next(iter(variant.ids)), 'EQTL', rel))
+            network.add_edge(Edge(gene, variant, 'EQTL', rel))
 
 with io.open(file_trans, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
@@ -77,6 +77,6 @@ with io.open(file_trans, 'r', encoding='utf-8', newline='') as f:
                 'snp_chr': row[2],
                 'cis_trans': 'trans'  # row[7] TODO: always "-"?
             }
-            network.add_edge(Edge(next(iter(gene.ids)), next(iter(variant.ids)), 'EQTL', rel))
+            network.add_edge(Edge(gene, variant, 'EQTL', rel))
 
 network.save('../data/Westra_etal_2017/graph.json')

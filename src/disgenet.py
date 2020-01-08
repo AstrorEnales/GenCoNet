@@ -64,7 +64,7 @@ with io.open('../data/DisGeNet/curated_gene_disease_associations.tsv', 'r', enco
                 'num_snps': int(row[14]),
                 'score': row[9]
             }
-            network.add_edge(Edge(next(iter(gene.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))
+            network.add_edge(Edge(gene, disease, 'ASSOCIATES_WITH', rel))
 
 with io.open('../data/DisGeNet/curated_variant_disease_associations.tsv', 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
@@ -103,6 +103,6 @@ with io.open('../data/DisGeNet/curated_variant_disease_associations.tsv', 'r', e
                 'num_pmids': int(row[14]),
                 'score': row[10]
             }
-            network.add_edge(Edge(next(iter(variant.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))
+            network.add_edge(Edge(variant, disease, 'ASSOCIATES_WITH', rel))
 
 network.save('../data/DisGeNet/graph.json')

@@ -78,6 +78,6 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
             for variant_id in {x.strip() for x in row[21].split(';')}:
                 variant = Variant(['dbSNP:%s' % variant_id], [])
                 network.add_node(variant)
-                network.add_edge(Edge(gene.id, variant.id, 'CODES', {'source': 'GWASCatalog', 'pmid': row[1]}))
+                network.add_edge(Edge(gene, variant, 'CODES', {'source': 'GWASCatalog', 'pmid': row[1]}))
 
 network.save('../data/GWAS-Catalog/graph.json')

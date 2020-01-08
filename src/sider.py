@@ -58,6 +58,6 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
         network.add_node(drug)
         disease = Disease(['UMLS:%s' % row[1], 'UMLS:%s' % row[5]], [row[3], row[6]])
         network.add_node(disease)
-        network.add_edge(Edge(next(iter(drug.ids)), next(iter(disease.ids)), 'INDICATES', {'source': 'SIDER'}))
+        network.add_edge(Edge(drug, disease, 'INDICATES', {'source': 'SIDER'}))
 
 network.save('../data/SIDER/graph.json')

@@ -69,7 +69,7 @@ with io.open(annotations_file, 'r', encoding='utf-8', newline='') as f:
                 label = 'BELONGS_TO_' + label
             elif label == 'CELLULAR_COMPONENT':
                 label = 'IN_' + label
-            e = Edge('UniProtKB:%s' % row[1], row[4], label, {'source': 'GO,%s' % row[5]})
+            e = Edge(gene, network.get_node_by_id(row[4], 'GOClass'), label, {'source': 'GO,%s' % row[5]})
             network.add_edge(e)
 
 network.save('../data/GO/graph.json')

@@ -41,6 +41,6 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
         if row[9]:
             pubmed_ids = ','.join(['PMID:%s' % x for x in row[9].strip().split(',')])
             rel['source'] += ',%s' % pubmed_ids
-        network.add_edge(Edge(next(iter(drug.ids)), next(iter(gene.ids)), 'TARGETS', rel))
+        network.add_edge(Edge(drug, gene, 'TARGETS', rel))
 
 network.save('../data/DGIdb/graph.json')

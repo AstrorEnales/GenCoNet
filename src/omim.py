@@ -76,6 +76,6 @@ with io.open('../data/OMIM/filtered_associations.csv', 'r', encoding='utf-8', ne
             'inheritance': row[2],
             'phenotype_mapping_key': row[4]
         }
-        network.add_edge(Edge(next(iter(gene.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))
+        network.add_edge(Edge(gene, disease, 'ASSOCIATES_WITH', rel))
 
 network.save('../data/OMIM/graph.json')

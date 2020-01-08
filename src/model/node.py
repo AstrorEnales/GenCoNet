@@ -36,6 +36,10 @@ class Node:
                 return x
         return list(self.ids)[0]
 
+    @property
+    def label_id(self) -> str:
+        return '%s|%s' % (self.label, self.id)
+
     def get_first_id_with_prefix(self, prefix: str) -> str or None:
         for x in self.ids:
             if x.startswith('%s:' % prefix):

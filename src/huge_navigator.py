@@ -33,6 +33,6 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
                 gene = Gene(['HGNC:%s' % part[0], 'Entrez:%s' % part[1]], [part[0]])
                 network.add_node(gene)
                 rel = {'source': 'HuGE Navigator'}
-                network.add_edge(Edge(next(iter(gene.ids)), next(iter(disease.ids)), 'ASSOCIATES_WITH', rel))
+                network.add_edge(Edge(gene, disease, 'ASSOCIATES_WITH', rel))
 
 network.save('../data/HuGE-Navigator/graph.json')

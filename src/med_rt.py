@@ -52,17 +52,21 @@ for association in root.findall('association'):
         drug = Drug([drug_id], [from_name])
         network.add_node(drug)
         added_rxnorm_drugs.add(from_id)
+    else:
+        drug = network.get_node_by_id(drug_id, 'Drug')
     disease_id = 'MeSH:%s' % to_id
     if to_id not in added_mesh_diseases:
         disease = Disease([disease_id], [to_name])
         network.add_node(disease)
         added_mesh_diseases.add(to_id)
+    else:
+        disease = network.get_node_by_id(disease_id, 'Disease')
     rel = {'source': 'MEDRT'}
     if association_type == 'induces':
-        network.add_edge(Edge(drug_id, disease_id, 'INDUCES', rel))
+        network.add_edge(Edge(drug, disease, 'INDUCES', rel))
     elif association_type == 'CI_with':
-        network.add_edge(Edge(drug_id, disease_id, 'CONTRAINDICATES', rel))
+        network.add_edge(Edge(drug, disease, 'CONTRAINDICATES', rel))
     elif association_type == 'may_treat':
-        network.add_edge(Edge(drug_id, disease_id, 'INDICATES', rel))
+        network.add_edge(Edge(drug, disease, 'INDICATES', rel))
 
 network.save('../data/MED-RT/graph.json')

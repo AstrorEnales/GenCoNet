@@ -26,9 +26,9 @@ def save_network(network: Network, config: Dict):
     for label in network.node_labels():
         with io.open(os.path.join(output_path, 'nodes_%s.csv' % label), 'w', encoding='utf-8', newline='') as f:
             writer = csv.writer(f, delimiter=',', quotechar='"')
-            writer.writerow(['_id:ID(Node-ID)', 'ids:string[]', 'names:string[]', ':LABEL'])
+            writer.writerow(['label_id:ID(Node-ID)', '_id:string', 'ids:string[]', 'names:string[]', ':LABEL'])
             for n in set(network.get_nodes_by_label(label)):
-                writer.writerow([n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
+                writer.writerow([n.label_id, n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
 
     edge_metadata = {
         'HAS_MOLECULAR_FUNCTION': [['source:string'], ['source']],
@@ -70,8 +70,9 @@ def save_network(network: Network, config: Dict):
                         values.append(l(e.attributes))
                     else:
                         values.append(e.attributes[l] if l in e.attributes else None)
-                writer.writerow(
-                    [network.get_node_by_id(e.source_node_id).id] + values + [network.get_node_by_id(e.target_node_id).id, e.label])
+                source_id = network.get_node_by_id(e.source_node_id, e.source_node_label).label_id
+                target_id = network.get_node_by_id(e.target_node_id, e.target_node_label).label_id
+                writer.writerow([source_id] + values + [target_id, e.label])
 
     with io.open(os.path.join(output_path, 'create_indices.cypher'), 'w', encoding='utf-8', newline='') as f:
         for node_label in network.node_labels():

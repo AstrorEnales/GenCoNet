@@ -197,7 +197,7 @@ for row in targets_results:
         'actions': row[6].split(',') if row[6] else [],
         'simplified_action': row[7]
     }
-    network.add_edge(Edge(next(iter(drug.ids)), next(iter(gene.ids)), 'TARGETS', rel))
+    network.add_edge(Edge(drug, gene, 'TARGETS', rel))
 for row in interactions_results:
     drug1 = Drug(['DrugBank:%s' % row[0]], [row[1]])
     network.add_node(drug1)
@@ -207,6 +207,6 @@ for row in interactions_results:
         'source': 'DrugBank',
         'description': row[4]
     }
-    network.add_edge(Edge(next(iter(drug1.ids)), next(iter(drug2.ids)), 'INTERACTS', rel))
+    network.add_edge(Edge(drug1, drug2, 'INTERACTS', rel))
 
 network.save('../data/DrugBank/graph.json')

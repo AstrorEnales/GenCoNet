@@ -21,6 +21,8 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     for row in reader:
+        if row[2] == 'entry withdrawn' or row[5] == 'Entry Withdrawn':
+            continue
         gene_ids = ['HGNC:%s' % row[1]]
         if row[0]:
             gene_ids.append(row[0])
