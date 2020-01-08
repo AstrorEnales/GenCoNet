@@ -9,6 +9,7 @@ from model.mirna import MiRNA
 from model.mrna import MRNA
 from model.ncrna import NcRNA
 from model.pirna import PiRNA
+from model.pseudogene import Pseudogene
 from model.ribozyme import Ribozyme
 from model.rna import RNA
 from model.rrna import RRNA
@@ -195,11 +196,12 @@ class Network:
     def load_from_dict(self, source: {}):
         py_class_map = {}
         for label in source['node_types']:
-            module_name = source['node_types'][label]
-            module = __import__(module_name)
-            for package in module_name.split('.')[1:]:
-                module = getattr(module, package)
-            py_class_map[label] = getattr(module, label)
+            if ';' not in label:
+                module_name = source['node_types'][label]
+                module = __import__(module_name)
+                for package in module_name.split('.')[1:]:
+                    module = getattr(module, package)
+                py_class_map[label] = getattr(module, label)
         for node in source['nodes']:
             if ';' not in node['_label']:
                 class_ = py_class_map[node['_label']]
@@ -220,6 +222,8 @@ class Network:
                     self.add_node(NcRNA(node['ids'], node['names']))
                 elif 'PiRNA' in label:
                     self.add_node(PiRNA(node['ids'], node['names']))
+                elif 'Pseudogene' in label:
+                    self.add_node(Pseudogene(node['ids'], node['names']))
                 elif 'Ribozyme' in label:
                     self.add_node(Ribozyme(node['ids'], node['names']))
                 elif 'RRNA' in label:
@@ -244,7 +248,13 @@ class Network:
             del params['_target_label']
             del params['_label']
             source_node = self.get_node_by_id(edge['_source_id'], edge['_source_label'])
+            if source_node is None:
+                print('Failed to load edge: could not find source node with label %s and id %s' % (
+                    edge['_source_label'], edge['_source_id']))
             target_node = self.get_node_by_id(edge['_target_id'], edge['_target_label'])
+            if target_node is None:
+                print('Failed to load edge: could not find target node with label %s and id %s' % (
+                    edge['_target_label'], edge['_target_id']))
             self.add_edge(Edge(source_node, target_node, edge['_label'], params))
 
     def save(self, file_path: str, indent: bool = False):
