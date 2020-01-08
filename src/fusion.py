@@ -23,11 +23,12 @@ def merge_duplicate_node_names(network: Network):
 def save_network(network: Network, config: Dict):
     output_path = config['output-path']
     # Save nodes
-    with io.open(os.path.join(output_path, 'nodes.csv'), 'w', encoding='utf-8', newline='') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"')
-        writer.writerow(['_id:ID(Node-ID)', 'ids:string[]', 'names:string[]', ':LABEL'])
-        for n in set(network.nodes.values()):
-            writer.writerow([n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
+    for label in network.node_labels():
+        with io.open(os.path.join(output_path, 'nodes_%s.csv' % label), 'w', encoding='utf-8', newline='') as f:
+            writer = csv.writer(f, delimiter=',', quotechar='"')
+            writer.writerow(['_id:ID(Node-ID)', 'ids:string[]', 'names:string[]', ':LABEL'])
+            for n in set(network.get_nodes_by_label(label)):
+                writer.writerow([n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
 
     edge_metadata = {
         'HAS_MOLECULAR_FUNCTION': [['source:string'], ['source']],
@@ -82,7 +83,7 @@ def save_network(network: Network, config: Dict):
         f.write('CALL ' + os.path.join(config['Neo4j']['bin-path'], 'neo4j-admin'))
         f.write(' import ' +
                 '--database %s ' % config['Neo4j']['database-name'] +
-                '--nodes nodes.csv ' +
+                ' '.join(['--nodes nodes_%s.csv' % x for x in network.node_labels()]) + ' ' +
                 ' '.join(['--relationships rel_%s.csv' % x for x in network.edge_labels()]) +
                 ' > import.log\n')
         f.write('net start neo4j\n')
@@ -93,7 +94,7 @@ def save_network(network: Network, config: Dict):
         f.write(os.path.join(config['Neo4j']['bin-path'], 'neo4j-admin'))
         f.write(' import ' +
                 '--database %s ' % config['Neo4j']['database-name'] +
-                '--nodes nodes.csv ' +
+                ' '.join(['--nodes nodes_%s.csv' % x for x in network.node_labels()]) + ' ' +
                 ' '.join(['--relationships rel_%s.csv' % x for x in network.edge_labels()]) +
                 ' > import.log\n')
 

@@ -23,7 +23,11 @@ class Node:
 
     @property
     def label(self) -> str:
-        return self.__class__.__name__
+        label = self.__class__.__name__
+        for base in self.__class__.__bases__:
+            if base.__name__ != 'Node':
+                label += ';' + base.__name__
+        return label
 
     @property
     def id(self) -> str:
