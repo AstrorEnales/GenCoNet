@@ -39,7 +39,7 @@ for rownum in range(sh.nrows):
         pmid = str(pmid)
 
         with io.open(mirna_to_URS_mapping_file, 'r', encoding='utf-8', newline='') as mapping_file:
-            mapping_reader = csv.reader(mapping_file,  delimiter='\t')
+            mapping_reader = csv.reader(mapping_file, delimiter='\t')
             next(mapping_reader, None)
             for mapping_row in mapping_reader:
                 if mirna_name == mapping_row[2]:
@@ -53,11 +53,11 @@ for rownum in range(sh.nrows):
                         for edge in edges:
                             pmid = edge.attributes['pmid'] + ', ' + str(pmid)
                             network.delete_edge(edge)
-                            e = Edge(mirna_rnacentral_id, gene_hgnc_id, 'REGULATES', {'source': 'miRTarBase', 'pmid': pmid})
+                            e = Edge(mirna, gene, 'REGULATES', {'source': 'miRTarBase', 'pmid': pmid})
                             network.add_edge(e)
                             edge_source_target_lookup.append(mirna_rnacentral_id + '$' + gene_hgnc_id)
                     else:
-                        e = Edge(mirna_rnacentral_id, gene_hgnc_id, 'REGULATES', {'source': 'miRTarBase', 'pmid': pmid})
+                        e = Edge(mirna, gene, 'REGULATES', {'source': 'miRTarBase', 'pmid': pmid})
                         network.add_edge(e)
                         edge_source_target_lookup.append(mirna_rnacentral_id + '$' + gene_hgnc_id)
                     break

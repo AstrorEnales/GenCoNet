@@ -40,8 +40,8 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
         taxid_interactor_a = row[9]
         taxid_interactor_b = row[10]
         if taxid_interactor_a == 'taxid:9606(Homo sapiens)' and taxid_interactor_b == 'taxid:9606(Homo sapiens)':
-            #miRNAs
-            mirna_rnacentral = re.split(':|_', row[0])
+            # miRNAs
+            mirna_rnacentral = re.split('[:_]', row[0])
             mirna_rnacentral_id = mirna_rnacentral[1]
             mirna_hgnc_id = 'None'
             with io.open(mirna_mapping_file, 'r', encoding='utf-8', newline='') as mm:
@@ -51,7 +51,7 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
                     if mirna_mapping_row[0] == mirna_rnacentral_id:
                         mirna_hgnc_id = mirna_mapping_row[2]
                         break
-            mirna_name = re.split('"| ', row[4])
+            mirna_name = re.split('[" ]', row[4])
             mirna_name = mirna_name[4]
             if mirna_hgnc_id != 'None':
                 mirna = MiRNA([mirna_rnacentral_id, mirna_hgnc_id], [mirna_name])
@@ -59,7 +59,7 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
             else:
                 mirna = MiRNA([mirna_rnacentral_id], [mirna_name])
                 network.add_node(mirna)
-            #genes
+            # genes
             gene_ensembl = row[1].split(':')
             gene_ensembl_id = gene_ensembl[1]
             gene_hgnc_id = 'None'
@@ -71,7 +71,7 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
                         gene_hgnc_id = 'HGNC:' + gene_mapping_row[1]
                         break
             if gene_hgnc_id != 'None' and 'gene' in row[21]:
-                gene_uniprotkb_id = re.split(':|\(', row[5])
+                gene_uniprotkb_id = re.split('[:(]', row[5])
                 gene_uniprotkb_id = 'UniProtKB:' + gene_uniprotkb_id[1]
                 gene_ensembl_id = 'Ensembl:' + gene_ensembl_id
                 gene = Gene([gene_hgnc_id, gene_uniprotkb_id, gene_ensembl_id], [])
@@ -86,15 +86,16 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
                         if reg_edge.attributes['source'] == ('EBI-GOA-miRNA, ' + source_database):
                             pmid = reg_edge.attributes['pmid'] + ', ' + pmid
                             network.delete_edge(reg_edge)
-                            e = Edge(mirna_rnacentral_id, gene_hgnc_id, 'REGULATES', {'source': 'EBI-GOA-miRNA, ' + source_database, 'pmid': pmid})
+                            e = Edge(mirna, gene, 'REGULATES',
+                                     {'source': 'EBI-GOA-miRNA, ' + source_database, 'pmid': pmid})
                             network.add_edge(e)
                             edge_source_target_lookup.append(mirna_rnacentral_id + '$' + gene_hgnc_id)
                 else:
-                    e = Edge(mirna_rnacentral_id, gene_hgnc_id, 'REGULATES', {'source': 'EBI-GOA-miRNA, ' + source_database, 'pmid': pmid})
+                    e = Edge(mirna, gene, 'REGULATES', {'source': 'EBI-GOA-miRNA, ' + source_database, 'pmid': pmid})
                     network.add_edge(e)
                     edge_source_target_lookup.append(mirna_rnacentral_id + '$' + gene_hgnc_id)
-                #GOs
-                go = re.split(':|\(', row[22])
+                # GOs
+                go = re.split('[:(]', row[22])
                 go_id = go[2].replace('"', '')
                 go_id = 'GO:' + go_id
                 go_name = go[3].replace(')', '')
@@ -110,11 +111,12 @@ with io.open(file, 'r', encoding='utf-8', newline='') as f:
                         if edge.attributes['source'] == ('EBI-GOA-miRNA, ' + source_database):
                             pmid = edge.attributes['pmid'] + ', ' + pmid
                             network.delete_edge(edge)
-                            e_go = Edge(mirna_rnacentral_id, go_id, label, {'source': 'EBI-GOA-miRNA, ' + source_database, 'pmid': pmid})
+                            e_go = Edge(mirna, go_class, label,
+                                        {'source': 'EBI-GOA-miRNA, ' + source_database, 'pmid': pmid})
                             network.add_edge(e_go)
                             edge_source_target_lookup.append(mirna_rnacentral_id + '$' + go_id)
                 else:
-                    e_go = Edge(mirna_rnacentral_id, go_id, label, {'source': 'EBI-GOA-miRNA, ' + source_database, 'pmid': pmid})
+                    e_go = Edge(mirna, go_class, label, {'source': 'EBI-GOA-miRNA, ' + source_database, 'pmid': pmid})
                     network.add_edge(e_go)
                     edge_source_target_lookup.append(mirna_rnacentral_id + '$' + go_id)
 

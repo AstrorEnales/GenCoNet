@@ -34,7 +34,7 @@ def get_mirna_id(mirna_name):
             if mapping_row[2] == mirna_name:
                 mirna_rnacentral_id = mapping_row[0]
                 break
-    return mirna_rnacentral_id  #can be None
+    return mirna_rnacentral_id  # can be None
 
 
 def get_rna_ids(name):
@@ -48,7 +48,7 @@ def get_rna_ids(name):
                 rnacentral_id = mapping_row[0]
                 hgnc_id = 'HGNC:' + name
                 break
-    return rnacentral_id, hgnc_id   #can be None
+    return rnacentral_id, hgnc_id  # can be None
 
 
 def check_hgnc_id(name):
@@ -59,11 +59,10 @@ def check_hgnc_id(name):
         for row in reader:
             if name in row:
                 hgnc_id = 'HGNC:' + name
-    return hgnc_id  #can be None
+    return hgnc_id  # can be None
 
 
 def add_rna(name, type, node_lookup):
-
     key = name + '$' + type
     if key in node_lookup.keys():
         node = node_lookup[key]
@@ -186,7 +185,7 @@ if __name__ == '__main__':
         print('HGNC mapping table does not exist. Trying to download...')
         with urllib.request.urlopen(hgnc_ids_url) as response, open(hgnc_ids_file, 'wb') as f:
             f.write(response.read())
-    
+
     network = Network()
     node_lookup = {}
     with io.open(file, 'r', encoding='utf-8', newline='') as f:
@@ -201,18 +200,18 @@ if __name__ == '__main__':
                 interactor_a = add_rna(interactor_a_name, interactor_a_type, node_lookup)
                 interactor_b = add_rna(interactor_b_name, interactor_b_type, node_lookup)
 
-                if interactor_a != None and interactor_b != None:
+                if interactor_a is not None and interactor_b is not None:
                     if interactor_a_type == 'mRNA':
                         gene = Gene([interactor_a.id], [])
                         network.add_node(gene)
-                        e = Edge(gene.id, interactor_a.id, 'TRANSCRIBES', {})
+                        e = Edge(gene, interactor_a, 'TRANSCRIBES', {})
                         network.add_edge(e)
                     elif interactor_b_type == 'mRNA':
                         gene = Gene([interactor_b.id], [])
                         network.add_node(gene)
-                        e = Edge(gene.id, interactor_b.id, 'TRANSCRIBES', {})
+                        e = Edge(gene, interactor_b, 'TRANSCRIBES', {})
                         network.add_edge(e)
-                    e = Edge(interactor_a.id, interactor_b.id, 'REGULATES', {'source': 'RNAInter'})
+                    e = Edge(interactor_a, interactor_b, 'REGULATES', {'source': 'RNAInter'})
                     network.add_edge(e)
 
     network.save('../data/RNAInter/graph.json')
