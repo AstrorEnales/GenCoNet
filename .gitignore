@@ -8,8 +8,11 @@ data/*/*.gz
 data/*/*.json
 data/*/*.dat
 data/*/*.owl
+data/*/*.xlsx
 data/*/*.gaf
 output/
+analysis/
 __pycache__
 *.cache
 .pytest_cache
+venv/

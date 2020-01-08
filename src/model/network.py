@@ -2,6 +2,20 @@ import io
 import json
 from model.node import Node
 from model.edge import Edge
+from model.circrna import CircRNA
+from model.erna import ERNA
+from model.lncrna import LncRNA
+from model.mirna import MiRNA
+from model.mrna import MRNA
+from model.ncrna import NcRNA
+from model.pirna import PiRNA
+from model.ribozyme import Ribozyme
+from model.rna import RNA
+from model.rrna import RRNA
+from model.scarna import ScaRNA
+from model.scrna import ScRNA
+from model.snorna import SnoRNA
+from model.snrna import SnRNA
 from typing import List, Dict, Iterator
 
 
@@ -190,6 +204,36 @@ class Network:
             if ';' not in node['_label']:
                 class_ = py_class_map[node['_label']]
                 self.add_node(class_(node['ids'], node['names']))
+            elif 'RNA' in node['_label']:
+                label = node['_label']
+                if 'CircRNA' in label:
+                    self.add_node(CircRNA(node['ids'], node['names']))
+                elif 'ERNA' in label:
+                    self.add_node(ERNA(node['ids'], node['names']))
+                elif 'LncRNA' in label:
+                    self.add_node(LncRNA(node['ids'], node['names']))
+                elif 'MiRNA' in label:
+                    self.add_node(MiRNA(node['ids'], node['names']))
+                elif 'MRNA' in label:
+                    self.add_node(MRNA(node['ids'], node['names']))
+                elif 'NcRNA' in label:
+                    self.add_node(NcRNA(node['ids'], node['names']))
+                elif 'PiRNA' in label:
+                    self.add_node(PiRNA(node['ids'], node['names']))
+                elif 'Ribozyme' in label:
+                    self.add_node(Ribozyme(node['ids'], node['names']))
+                elif 'RRNA' in label:
+                    self.add_node(RRNA(node['ids'], node['names']))
+                elif 'ScaRNA' in label:
+                    self.add_node(ScaRNA(node['ids'], node['names']))
+                elif 'ScRNA' in label:
+                    self.add_node(ScRNA(node['ids'], node['names']))
+                elif 'SnoRNA' in label:
+                    self.add_node(SnoRNA(node['ids'], node['names']))
+                elif 'SnRNA' in label:
+                    self.add_node(SnRNA(node['ids'], node['names']))
+                else:
+                    self.add_node(RNA(node['ids'], node['names']))
             else:
                 print('[Err ] Failed to load node with multiple labels', node)
         for edge in source['edges']:

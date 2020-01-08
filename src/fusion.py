@@ -31,10 +31,12 @@ def save_network(network: Network, config: Dict):
                 writer.writerow([n.label_id, n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
 
     edge_metadata = {
-        'HAS_MOLECULAR_FUNCTION': [['source:string'], ['source']],
-        'BELONGS_TO_BIOLOGICAL_PROCESS': [['source:string'], ['source']],
-        'IN_CELLULAR_COMPONENT': [['source:string'], ['source']],
+        'HAS_MOLECULAR_FUNCTION': [['source:string', 'pmid:string'], ['source', 'pmid']],   #pmid int now not string
+        'BELONGS_TO_BIOLOGICAL_PROCESS': [['source:string', 'pmid:string'], ['source', 'pmid']],
+        'IN_CELLULAR_COMPONENT': [['source:string', 'pmid:string'], ['source', 'pmid']],
         'INDICATES': [['source:string'], ['source']],
+        'REGULATES': [['source:string', 'pmid:string'], ['source', 'pmid']],
+        'TRANSCRIBES': [['source:string'], ['source']],
         'CONTRAINDICATES': [['source:string'], ['source']],
         'INDUCES': [['source:string'], ['source']],
         'CODES': [['source:string', 'pmid:int'], ['source', 'pmid']],
@@ -107,6 +109,9 @@ if __name__ == '__main__':
     network = Network()
     # Import
     graphs = [
+        '../data/EBI-GOA-miRNA/graph.json',
+        '../data/miRTarBase/graph.json',
+        '../data/RNAInter/graph.json',
         '../data/DisGeNet/graph.json',
         '../data/DrugBank/graph.json',
         '../data/DrugCentral/graph.json',
