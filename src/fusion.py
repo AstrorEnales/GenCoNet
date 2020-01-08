@@ -23,15 +23,20 @@ def merge_duplicate_node_names(network: Network):
 def save_network(network: Network, config: Dict):
     output_path = config['output-path']
     # Save nodes
+    node_import_files = []
     for label in network.node_labels():
-        with io.open(os.path.join(output_path, 'nodes_%s.csv' % label), 'w', encoding='utf-8', newline='') as f:
-            writer = csv.writer(f, delimiter=',', quotechar='"')
-            writer.writerow(['label_id:ID(Node-ID)', '_id:string', 'ids:string[]', 'names:string[]', ':LABEL'])
-            for n in set(network.get_nodes_by_label(label)):
-                writer.writerow([n.label_id, n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
+        file_name = 'nodes_%s.csv' % label.replace(';', '_')
+        nodes = set(network.get_nodes_by_label(label))
+        if len(nodes) > 0:
+            node_import_files.append(file_name)
+            with io.open(os.path.join(output_path, file_name), 'w', encoding='utf-8', newline='') as f:
+                writer = csv.writer(f, delimiter=',', quotechar='"')
+                writer.writerow(['label_id:ID(Node-ID)', '_id:string', 'ids:string[]', 'names:string[]', ':LABEL'])
+                for n in nodes:
+                    writer.writerow([n.label_id, n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
 
     edge_metadata = {
-        'HAS_MOLECULAR_FUNCTION': [['source:string', 'pmid:string'], ['source', 'pmid']],   #pmid int now not string
+        'HAS_MOLECULAR_FUNCTION': [['source:string', 'pmid:string'], ['source', 'pmid']],   # pmid int now not string
         'BELONGS_TO_BIOLOGICAL_PROCESS': [['source:string', 'pmid:string'], ['source', 'pmid']],
         'IN_CELLULAR_COMPONENT': [['source:string', 'pmid:string'], ['source', 'pmid']],
         'INDICATES': [['source:string'], ['source']],
@@ -77,7 +82,10 @@ def save_network(network: Network, config: Dict):
                 writer.writerow([source_id] + values + [target_id, e.label])
 
     with io.open(os.path.join(output_path, 'create_indices.cypher'), 'w', encoding='utf-8', newline='') as f:
+        unique_labels = set()
         for node_label in network.node_labels():
+            unique_labels.update(set(node_label.split(';')))
+        for node_label in unique_labels:
             f.write('create constraint on (p:%s) assert p._id is unique;\n' % node_label)
     with io.open(os.path.join(output_path, 'import_admin.bat'), 'w', encoding='utf-8', newline='') as f:
         f.write('@echo off\n')
@@ -86,7 +94,7 @@ def save_network(network: Network, config: Dict):
         f.write('CALL ' + os.path.join(config['Neo4j']['bin-path'], 'neo4j-admin'))
         f.write(' import ' +
                 '--database %s ' % config['Neo4j']['database-name'] +
-                ' '.join(['--nodes nodes_%s.csv' % x for x in network.node_labels()]) + ' ' +
+                ' '.join(['--nodes %s' % x for x in node_import_files]) + ' ' +
                 ' '.join(['--relationships rel_%s.csv' % x for x in network.edge_labels()]) +
                 ' > import.log\n')
         f.write('net start neo4j\n')
@@ -97,7 +105,7 @@ def save_network(network: Network, config: Dict):
         f.write(os.path.join(config['Neo4j']['bin-path'], 'neo4j-admin'))
         f.write(' import ' +
                 '--database %s ' % config['Neo4j']['database-name'] +
-                ' '.join(['--nodes nodes_%s.csv' % x for x in network.node_labels()]) + ' ' +
+                ' '.join(['--nodes %s' % x for x in node_import_files]) + ' ' +
                 ' '.join(['--relationships rel_%s.csv' % x for x in network.edge_labels()]) +
                 ' > import.log\n')
 
