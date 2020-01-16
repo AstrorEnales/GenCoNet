@@ -31,12 +31,22 @@ def save_network(network: Network, config: Dict):
             node_import_files.append(file_name)
             with io.open(os.path.join(output_path, file_name), 'w', encoding='utf-8', newline='') as f:
                 writer = csv.writer(f, delimiter=',', quotechar='"')
-                writer.writerow(['label_id:ID(Node-ID)', '_id:string', 'ids:string[]', 'names:string[]', ':LABEL'])
+                all_attribute_keys = set()
                 for n in nodes:
-                    writer.writerow([n.label_id, n.id, ';'.join(n.ids), ';'.join(n.names), n.label])
+                    all_attribute_keys.update(n.attributes.keys())
+                all_attribute_keys = sorted(all_attribute_keys)
+                writer.writerow(
+                    ['label_id:ID(Node-ID)', '_id:string', 'ids:string[]', 'names:string[]'] +
+                    ['%s:string' % x for x in all_attribute_keys] + [':LABEL'])
+                for n in nodes:
+                    row = [n.label_id, n.id, ';'.join(n.ids), ';'.join(n.names)]
+                    for key in all_attribute_keys:
+                        row.append(n.attributes[key] if key in n.attributes else None)
+                    row.append(n.label)
+                    writer.writerow(row)
 
     edge_metadata = {
-        'HAS_MOLECULAR_FUNCTION': [['source:string', 'pmid:string'], ['source', 'pmid']],   # pmid int now not string
+        'HAS_MOLECULAR_FUNCTION': [['source:string', 'pmid:string'], ['source', 'pmid']],  # pmid int now not string
         'BELONGS_TO_BIOLOGICAL_PROCESS': [['source:string', 'pmid:string'], ['source', 'pmid']],
         'IN_CELLULAR_COMPONENT': [['source:string', 'pmid:string'], ['source', 'pmid']],
         'INDICATES': [['source:string'], ['source']],
@@ -62,7 +72,9 @@ def save_network(network: Network, config: Dict):
         'ASSOCIATES_WITH': [
             ['source:string', 'num_pmids:int', 'num_snps:int', 'score:string'],
             ['source', 'num_pmids', 'num_snps', 'score']
-        ]
+        ],
+        'HAS_ADR': [['source:string'], ['source']],
+        'ASSOCIATED_WITH_ADR': [['source:string'], ['source']]
     }
 
     # Save relationships

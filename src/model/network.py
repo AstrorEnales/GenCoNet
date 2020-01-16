@@ -177,6 +177,7 @@ class Network:
                 '_id': node.id,
                 '_label': node.label
             }
+            n.update(node.attributes)
             if node.label not in result['node_types']:
                 result['node_types'][node.label] = node.__module__
             result['nodes'].append(n)
@@ -203,43 +204,50 @@ class Network:
                     module = getattr(module, package)
                 py_class_map[label] = getattr(module, label)
         for node in source['nodes']:
+            node_instance: Node
             if ';' not in node['_label']:
                 class_ = py_class_map[node['_label']]
-                self.add_node(class_(node['ids'], node['names']))
+                node_instance = class_(node['ids'], node['names'])
             elif 'RNA' in node['_label']:
                 label = node['_label']
                 if 'CircRNA' in label:
-                    self.add_node(CircRNA(node['ids'], node['names']))
+                    node_instance = CircRNA(node['ids'], node['names'])
                 elif 'ERNA' in label:
-                    self.add_node(ERNA(node['ids'], node['names']))
+                    node_instance = ERNA(node['ids'], node['names'])
                 elif 'LncRNA' in label:
-                    self.add_node(LncRNA(node['ids'], node['names']))
+                    node_instance = LncRNA(node['ids'], node['names'])
                 elif 'MiRNA' in label:
-                    self.add_node(MiRNA(node['ids'], node['names']))
+                    node_instance = MiRNA(node['ids'], node['names'])
                 elif 'MRNA' in label:
-                    self.add_node(MRNA(node['ids'], node['names']))
+                    node_instance = MRNA(node['ids'], node['names'])
                 elif 'NcRNA' in label:
-                    self.add_node(NcRNA(node['ids'], node['names']))
+                    node_instance = NcRNA(node['ids'], node['names'])
                 elif 'PiRNA' in label:
-                    self.add_node(PiRNA(node['ids'], node['names']))
+                    node_instance = PiRNA(node['ids'], node['names'])
                 elif 'Pseudogene' in label:
-                    self.add_node(Pseudogene(node['ids'], node['names']))
+                    node_instance = Pseudogene(node['ids'], node['names'])
                 elif 'Ribozyme' in label:
-                    self.add_node(Ribozyme(node['ids'], node['names']))
+                    node_instance = Ribozyme(node['ids'], node['names'])
                 elif 'RRNA' in label:
-                    self.add_node(RRNA(node['ids'], node['names']))
+                    node_instance = RRNA(node['ids'], node['names'])
                 elif 'ScaRNA' in label:
-                    self.add_node(ScaRNA(node['ids'], node['names']))
+                    node_instance = ScaRNA(node['ids'], node['names'])
                 elif 'ScRNA' in label:
-                    self.add_node(ScRNA(node['ids'], node['names']))
+                    node_instance = ScRNA(node['ids'], node['names'])
                 elif 'SnoRNA' in label:
-                    self.add_node(SnoRNA(node['ids'], node['names']))
+                    node_instance = SnoRNA(node['ids'], node['names'])
                 elif 'SnRNA' in label:
-                    self.add_node(SnRNA(node['ids'], node['names']))
+                    node_instance = SnRNA(node['ids'], node['names'])
                 else:
-                    self.add_node(RNA(node['ids'], node['names']))
+                    node_instance = RNA(node['ids'], node['names'])
             else:
                 print('[Err ] Failed to load node with multiple labels', node)
+                continue
+            for key in node.keys():
+                if key not in ['_id', 'ids', 'names', '_label']:
+                    node_instance.attributes[key] = node[key]
+            self.add_node(node_instance)
+
         for edge in source['edges']:
             params = dict(edge)
             del params['_source_id']

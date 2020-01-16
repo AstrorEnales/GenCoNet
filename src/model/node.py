@@ -1,4 +1,4 @@
-from typing import Set
+from typing import Set, Any, Dict
 
 
 class Node:
@@ -6,6 +6,7 @@ class Node:
         self.ids: Set[str] = set(ids)
         self.names: Set[str] = set(names)
         self.hash = self.calculate_hash()
+        self.attributes: Dict[str, Any] = {}
         self.primary_id_prefix = ''
 
     def __str__(self) -> str:
@@ -49,6 +50,11 @@ class Node:
     def merge(self, o):
         self.ids.update(o.ids)
         self.names.update(o.names)
+        for key in o.attributes:
+            if key in self.attributes:
+                print('[WARN] merging nodes where both have the same attribute key "%s" and the values differ.' % key)
+                print('\t', self.attributes[key])
+                print('\t', o.attributes[key])
         self.hash = self.calculate_hash()
 
     def calculate_hash(self):

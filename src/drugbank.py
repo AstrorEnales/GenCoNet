@@ -5,10 +5,13 @@ import csv
 import os.path
 import zipfile
 import lxml.etree as etree
+
+from model.adr import AdverseDrugReaction
 from model.network import Network
 from model.drug import Drug
 from model.gene import Gene
 from model.edge import Edge
+from model.variant import Variant
 
 
 def get_drugbank_id(drug_node, ns):
@@ -35,8 +38,9 @@ if not os.path.exists(file):
 identifiers_output_file = '../data/DrugBank/drug_identifiers.csv'
 targets_output_file = '../data/DrugBank/drugs_target_human_genes.csv'
 interactions_output_file = '../data/DrugBank/drug_interactions.csv'
-if not os.path.exists(targets_output_file) or not os.path.exists(interactions_output_file) \
-        or not os.path.exists(identifiers_output_file):
+snp_adr_output_file = '../data/DrugBank/drug_snp_adrs.csv'
+if any([not os.path.exists(x) for x in
+        [targets_output_file, interactions_output_file, identifiers_output_file, snp_adr_output_file]]):
     positive = {'inducer', 'agonist', 'activator', 'partial agonist', 'stimulator', 'positive modulator',
                 'positive allosteric modulator'}
     negative = {'blocker', 'antagonist', 'antibody', 'weak inhibitor', 'suppressor', 'partial antagonist',
@@ -109,12 +113,24 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
                 id2 = interaction_node.find(ns + 'drugbank-id').text
                 description = interaction_node.find(ns + 'description').text
                 interactions.append([id2, description])
-        drugs[drugbank_id] = [drug_name, targets, interactions, external_ids]
+        # Collect all SNP ADRs for the drug
+        snp_adrs = []
+        snp_adrs_node = drug_node.find(ns + 'snp-adverse-drug-reactions')
+        if snp_adrs_node is not None:
+            for snp_adr_node in snp_adrs_node:
+                gene_symbol = snp_adr_node.find(ns + 'gene-symbol').text
+                rs_id = snp_adr_node.find(ns + 'rs-id').text
+                adverse_reaction = snp_adr_node.find(ns + 'adverse-reaction').text
+                description = snp_adr_node.find(ns + 'description').text
+                pubmed_id = snp_adr_node.find(ns + 'pubmed-id').text
+                snp_adrs.append([gene_symbol, rs_id, adverse_reaction, description, pubmed_id])
+        drugs[drugbank_id] = [drug_name, targets, interactions, external_ids, snp_adrs]
         drug_node.clear()
 
     targets_results = []
     interactions_results = []
     external_id_results = []
+    snp_adrs_results = []
     for drugbank_id in sorted(drugs.keys()):
         drug = drugs[drugbank_id]
         for target in drug[1]:
@@ -139,6 +155,9 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
                 pubchem_id = external_id
         external_id_results.append([drugbank_id, chembl_id, kegg_id, pubchem_id])
 
+        for snp_adr in drug[4]:
+            snp_adrs_results.append([drugbank_id] + snp_adr)
+
     with io.open(targets_output_file, 'w', encoding='utf-8', newline='') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"')
         writer.writerow(['drugbank_id', 'drug_name', 'gene', 'gene_name', 'hgnc_id', 'known_action', 'actions',
@@ -155,6 +174,11 @@ if not os.path.exists(targets_output_file) or not os.path.exists(interactions_ou
         writer.writerow(['drugbank_id', 'ChEMBL', 'KEGG Drug', 'PubChem Compound'])
         for row in external_id_results:
             writer.writerow(row)
+    with io.open(snp_adr_output_file, 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f, delimiter=',', quotechar='"')
+        writer.writerow(['drugbank_id', 'gene_symbol', 'rs_id', 'adverse_reaction', 'description', 'pubmed_id'])
+        for row in snp_adrs_results:
+            writer.writerow(row)
 else:
     targets_results = []
     with io.open(targets_output_file, 'r', encoding='utf-8', newline='') as f:
@@ -168,12 +192,18 @@ else:
         next(reader, None)
         for row in reader:
             interactions_results.append(row)
-        external_id_results = []
+    external_id_results = []
     with io.open(identifiers_output_file, 'r', encoding='utf-8', newline='') as f:
         reader = csv.reader(f, delimiter=',', quotechar='"')
         next(reader, None)
         for row in reader:
             external_id_results.append(row)
+    snp_adrs_results = []
+    with io.open(snp_adr_output_file, 'r', encoding='utf-8', newline='') as f:
+        reader = csv.reader(f, delimiter=',', quotechar='"')
+        next(reader, None)
+        for row in reader:
+            snp_adrs_results.append(row)
 
 external_id_lookup = {}
 for row in external_id_results:
@@ -208,5 +238,27 @@ for row in interactions_results:
         'description': row[4]
     }
     network.add_edge(Edge(drug1, drug2, 'INTERACTS', rel))
+adr_id_counter = 1
+for row in snp_adrs_results:
+    # drugbank_id, gene_symbol, rs_id, adverse_reaction, description, pubmed_id
+    adr = AdverseDrugReaction(['GenCoNet:DrugBank_ADR_%s' % adr_id_counter], [])
+    adr_id_counter += 1
+    adr.attributes = {
+        'source': 'DrugBank',
+        'adverse_reaction': row[3],
+        'description': row[4],
+        'pmid': row[5]
+    }
+    network.add_node(adr)
+    drug = Drug(['DrugBank:%s' % row[0]], [])
+    network.add_node(drug)
+    network.add_edge(Edge(drug, adr, 'HAS_ADR', {'source': 'DrugBank'}))
+    if row[2] and len(row[2]) > 0:
+        variant = Variant(['dbSNP:%s' % row[2]], [])
+        network.add_node(variant)
+        network.add_edge(Edge(variant, adr, 'ASSOCIATED_WITH_ADR', {'source': 'DrugBank'}))
+    gene = Gene(['HGNC:%s' % row[1]], [])
+    network.add_node(gene)
+    network.add_edge(Edge(gene, adr, 'ASSOCIATED_WITH_ADR', {'source': 'DrugBank'}))
 
 network.save('../data/DrugBank/graph.json')

@@ -8,6 +8,8 @@ import zipfile
 import urllib.request
 from typing import List, Set, Tuple
 
+from model.adr import AdverseDrugReaction
+from model.edge import Edge
 from model.gene import Gene
 from model.network import Network
 from model.drug import Drug
@@ -117,12 +119,17 @@ def process_disease_external_vocabulary(ids: List[str]) -> Set[Tuple[str, str]]:
     return filtered_ids
 
 
+def open_file_in_zip(zip_filepath: str, filename: str):
+    with zipfile.ZipFile(zip_filepath) as z:
+        return io.TextIOWrapper(z.open(filename, 'r'), encoding='utf-8', newline='')
+
+
 network = Network()
 request_headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.36 (KHTML, like Gecko) ' +
                   'Chrome/35.0.1916.47 Safari/537.36'
 }
-for name in ['genes', 'variants', 'drugs', 'phenotypes']:
+for name in ['genes', 'variants', 'drugs', 'phenotypes', 'annotations']:
     url = 'https://s3.pgkb.org/data/%s.zip' % name
     zip_file = '../data/PharmGKB/%s.zip' % name
     if not os.path.exists(zip_file):
@@ -130,11 +137,8 @@ for name in ['genes', 'variants', 'drugs', 'phenotypes']:
         request = urllib.request.Request(url, headers=request_headers)
         with urllib.request.urlopen(request) as response, open(zip_file, 'wb') as f:
             f.write(response.read())
-    with zipfile.ZipFile(zip_file) as z:
-        with open('../data/PharmGKB/%s.tsv' % name, 'wb') as f:
-            f.write(z.read('%s.tsv' % name))
 
-with io.open('../data/PharmGKB/drugs.tsv', 'r', encoding='utf-8', newline='') as f:
+with open_file_in_zip('../data/PharmGKB/drugs.zip', 'drugs.tsv') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     for row in reader:
@@ -151,7 +155,7 @@ with io.open('../data/PharmGKB/drugs.tsv', 'r', encoding='utf-8', newline='') as
             drug = Drug(drug_ids, [row[1]])
             network.add_node(drug)
 
-with io.open('../data/PharmGKB/genes.tsv', 'r', encoding='utf-8', newline='') as f:
+with open_file_in_zip('../data/PharmGKB/genes.zip', 'genes.tsv') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     #  0 - PharmGKB Accession Id
@@ -183,7 +187,7 @@ with io.open('../data/PharmGKB/genes.tsv', 'r', encoding='utf-8', newline='') as
         gene = Gene(gene_ids, [row[4]])
         network.add_node(gene)
 
-with io.open('../data/PharmGKB/variants.tsv', 'r', encoding='utf-8', newline='') as f:
+with open_file_in_zip('../data/PharmGKB/variants.zip', 'variants.tsv') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     for row in reader:
@@ -193,7 +197,7 @@ with io.open('../data/PharmGKB/variants.tsv', 'r', encoding='utf-8', newline='')
         variant = Variant(variant_ids, [])
         network.add_node(variant)
 
-with io.open('../data/PharmGKB/phenotypes.tsv', 'r', encoding='utf-8', newline='') as f:
+with open_file_in_zip('../data/PharmGKB/phenotypes.zip', 'phenotypes.tsv') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
     next(reader, None)
     for row in reader:
@@ -205,5 +209,60 @@ with io.open('../data/PharmGKB/phenotypes.tsv', 'r', encoding='utf-8', newline='
                 disease_names.add(id_name_pair[1])
         disease = Disease(disease_ids, disease_names)
         network.add_node(disease)
+
+with open_file_in_zip('../data/PharmGKB/annotations.zip', 'clinical_ann_metadata.tsv') as f:
+    reader = csv.reader(f, delimiter='\t', quotechar='"')
+    next(reader, None)
+    #  0 - Clinical Annotation ID
+    #  1 - Location
+    #  2 - Gene
+    #  3 - Level of Evidence
+    #  4 - Clinical Annotation Types
+    #  5 - Genotype-Phenotype IDs       TODO
+    #  6 - Annotation Text
+    #  7 - Variant Annotations IDs      TODO
+    #  8 - Variant Annotations
+    #  9 - PMIDs
+    # 10 - Evidence Count
+    # 11 - Related Chemicals
+    # 12 - Related Diseases
+    # 13 - Biogeographical Groups
+    # 14 - Chromosome
+    for row in reader:
+        if 'Toxicity/ADR' not in row[4]:
+            continue
+        adr = AdverseDrugReaction(['PharmGKB:%s' % row[0]], [])
+        adr.attributes = {
+            'location': row[1],
+            'level_of_evidence': row[3],
+            'description': row[6],
+            'variant_annotations': row[8],
+            'pmids': row[9].replace(',', ';'),
+            'evidence_count': row[10],
+            'biogeographical_groups': row[13],
+            'chromosome': row[14]
+        }
+        network.add_node(adr)
+        for gene in split_list(row[2]):
+            hgnc_id, pharmgkb_id = gene.split('(')
+            gene_node = Gene(['HGNC:%s' % hgnc_id.strip(), 'PharmGKB:%s' % pharmgkb_id.strip(')')], [])
+            network.add_node(gene_node)
+            network.add_edge(Edge(gene_node, adr, 'ASSOCIATED_WITH_ADR', {'source': 'PharmGKB'}))
+        for chemical in split_list(row[11]):
+            name = chemical[0:chemical.rfind('(')].strip()
+            pharmgkb_id = chemical[chemical.rfind('(') + 1:].strip(')')
+            drug_node = Drug(['PharmGKB:%s' % pharmgkb_id], [name])
+            network.add_node(drug_node)
+            network.add_edge(Edge(drug_node, adr, 'HAS_ADR', {'source': 'PharmGKB'}))
+        for disease in split_list(row[12]):
+            name = disease[0:disease.rfind('(')].strip()
+            pharmgkb_id = disease[disease.rfind('(') + 1:].strip(')')
+            disease_node = Disease(['PharmGKB:%s' % pharmgkb_id], [name])
+            network.add_node(disease_node)
+            network.add_edge(Edge(disease_node, adr, 'ASSOCIATED_WITH_ADR', {'source': 'PharmGKB'}))
+        if row[1].startswith('rs'):
+            variant = Variant(['dbSNP:%s' % row[1]], [])
+            network.add_node(variant)
+            network.add_edge(Edge(variant, adr, 'ASSOCIATED_WITH_ADR', {'source': 'PharmGKB'}))
 
 network.save('../data/PharmGKB/graph.json')
