@@ -153,6 +153,7 @@ with open_file_in_zip('../data/PharmGKB/drugs.zip', 'drugs.tsv') as f:
             for compound_id in split_list(row[23]):
                 drug_ids.add('PubChem:CID%s' % compound_id)
             drug = Drug(drug_ids, [row[1]])
+            drug.attributes['type'] = row[5]
             network.add_node(drug)
 
 with open_file_in_zip('../data/PharmGKB/genes.zip', 'genes.tsv') as f:
@@ -195,7 +196,13 @@ with open_file_in_zip('../data/PharmGKB/variants.zip', 'variants.tsv') as f:
         if row[1]:
             variant_ids.add('dbSNP:%s' % row[1])
         variant = Variant(variant_ids, [])
+        variant.attributes['location'] = row[4]
         network.add_node(variant)
+        if row[2] and len(row[2]) > 0:
+            for gene_id in ['PharmGKB:%s' % x.strip() for x in row[2].split(',')]:
+                gene = Gene([gene_id], [])
+                network.add_node(gene)
+                network.add_edge(Edge(gene, variant, "CODES", {'source': 'PharmGKB'}))
 
 with open_file_in_zip('../data/PharmGKB/phenotypes.zip', 'phenotypes.tsv') as f:
     reader = csv.reader(f, delimiter='\t', quotechar='"')
