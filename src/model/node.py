@@ -51,7 +51,7 @@ class Node:
         self.ids.update(o.ids)
         self.names.update(o.names)
         for key in o.attributes:
-            if key in self.attributes:
+            if key in self.attributes and self.attributes[key] != o.attributes[key]:
                 print('[WARN] merging nodes where both have the same attribute key "%s" and the values differ.' % key)
                 print('\t', self.attributes[key])
                 print('\t', o.attributes[key])
